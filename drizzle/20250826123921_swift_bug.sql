@@ -1,0 +1,2 @@
+ALTER TABLE "cost_types" ALTER COLUMN "category" SET DEFAULT 'vehicle'::"public"."cost_category";--> statement-breakpoint
+ALTER TABLE "cost_types" ALTER COLUMN "category" SET DATA TYPE "public"."cost_category" USING "category"::"public"."cost_category";

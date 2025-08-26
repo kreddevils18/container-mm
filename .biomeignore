@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+
+# Generated files
+types/next-auth.d.ts
+
+# Test files (partial ignore for non-console issues)
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__/**
+src/test/
+
+# Configuration files
+.env*
+.claude/

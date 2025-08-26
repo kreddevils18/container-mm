@@ -1,0 +1,19 @@
+
+> container-mm-frontend@0.1.0 lint /Users/kien-hoangtrung/Projects/softwares/outsource/container-mm/apps/web
+> next lint
+
+
+./src/app/(protected)/costs/[id]/page.tsx
+5:8  Warning: 'Link' is defined but never used.  @typescript-eslint/no-unused-vars
+6:10  Warning: 'Edit' is defined but never used.  @typescript-eslint/no-unused-vars
+6:16  Warning: 'Trash2' is defined but never used.  @typescript-eslint/no-unused-vars
+9:10  Warning: 'Button' is defined but never used.  @typescript-eslint/no-unused-vars
+22:9  Warning: 'handleDelete' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/features/revenue/components/revenue-table-toolbar.tsx
+41:11  Warning: '_facets' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/features/users/components/users-table-toolbar.tsx
+41:5  Warning: 'setRole' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
