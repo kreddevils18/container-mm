@@ -1,16 +1,19 @@
 "use client";
 
 import {
+    Anchor,
     Calendar,
     CalendarClock,
     DollarSign,
     FileText,
+    Fuel,
     Hash,
     Info,
     MapPin,
     Package,
     Truck,
     User,
+    UserCheck,
 } from "lucide-react";
 import type { ReactElement } from "react";
 import { useState } from "react";
@@ -48,7 +51,9 @@ interface OrderDetailProps {
     order: Order & {
         customerName?: string | null;
         emptyPickupVehicleLabel?: string | null;
+        emptyPickupDriverName?: string | null;
         deliveryVehicleLabel?: string | null;
+        deliveryDriverName?: string | null;
         statusHistory?: Array<{
             id: string;
             previousStatus: string | null;
@@ -58,6 +63,10 @@ interface OrderDetailProps {
             changedAt: Date;
         }>;
         costs?: Cost[];
+        containers?: Array<{
+            containerType: "D2" | "D4" | "R2" | "R4";
+            quantity: number;
+        }>;
     };
     costTypes: CostType[];
 }
@@ -151,6 +160,57 @@ export function OrderDetail({
                         </div>
                     )}
 
+                    {order.shippingLine && (
+                        <div className="flex items-center gap-3">
+                            <Anchor className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                                <p className="font-medium">{order.shippingLine}</p>
+                                <p className="text-sm text-muted-foreground">Hãng tàu</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {order.bookingNumber && (
+                        <div className="flex items-center gap-3">
+                            <Hash className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                                <p className="font-medium">{order.bookingNumber}</p>
+                                <p className="text-sm text-muted-foreground">Số Booking</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {order.oilQuantity && (
+                        <div className="flex items-center gap-3">
+                            <Fuel className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                                <p className="font-medium">{order.oilQuantity} lít</p>
+                                <p className="text-sm text-muted-foreground">Dầu</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {order.containers && order.containers.length > 0 && (
+                        <div className="space-y-2">
+                            <p className="text-sm font-semibold">Container</p>
+                            <div className="flex items-start gap-3">
+                                <Package className="h-4 w-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <div className="space-y-1">
+                                        {order.containers.map((container) => (
+                                            <p key={container.containerType} className="font-medium">
+                                                {container.containerType}: {container.quantity} containers
+                                            </p>
+                                        ))}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Loại và số lượng container
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {(order.emptyPickupVehicleId ||
                         order.emptyPickupDate ||
                         order.emptyPickupStart ||
@@ -168,6 +228,18 @@ export function OrderDetail({
                                                 {order.emptyPickupVehicleLabel
                                                     ? `: ${order.emptyPickupVehicleLabel}`
                                                     : ""}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.emptyPickupDriverName && (
+                                    <div className="flex items-center gap-3">
+                                        <UserCheck className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="font-medium">{order.emptyPickupDriverName}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Tài xế kéo về
                                             </p>
                                         </div>
                                     </div>
@@ -219,6 +291,18 @@ export function OrderDetail({
                                                 {order.deliveryVehicleLabel
                                                     ? `: ${order.deliveryVehicleLabel}`
                                                     : ""}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.deliveryDriverName && (
+                                    <div className="flex items-center gap-3">
+                                        <UserCheck className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="font-medium">{order.deliveryDriverName}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Tài xế kéo đi
                                             </p>
                                         </div>
                                     </div>

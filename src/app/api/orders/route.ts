@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { db, orders } from "@/drizzle/schema";
+import { db, orders, orderContainers } from "@/drizzle/schema";
 import { CreateOrderRequestSchema } from "@/schemas/order";
 import { logger } from "@/lib/logger";
 
@@ -22,6 +22,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const {
       customerId,
       containerCode,
+      shippingLine,
+      bookingNumber,
+      oilQuantity,
       emptyPickupVehicleId,
       emptyPickupDate,
       emptyPickupStart,
@@ -33,6 +36,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       description,
       status,
       price,
+      containers,
     } = validatedFields.data;
 
     const [newOrder] = await db
@@ -40,6 +44,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .values({
         customerId,
         containerCode: containerCode || null,
+        shippingLine: shippingLine || null,
+        bookingNumber: bookingNumber || null,
+        oilQuantity: oilQuantity || null,
         emptyPickupVehicleId: emptyPickupVehicleId || null,
         emptyPickupDate: emptyPickupDate ? new Date(emptyPickupDate) : null,
         emptyPickupStart: emptyPickupStart || null,
@@ -56,6 +63,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         id: orders.id,
         customerId: orders.customerId,
         containerCode: orders.containerCode,
+        shippingLine: orders.shippingLine,
+        bookingNumber: orders.bookingNumber,
+        oilQuantity: orders.oilQuantity,
         emptyPickupVehicleId: orders.emptyPickupVehicleId,
         emptyPickupDate: orders.emptyPickupDate,
         emptyPickupStart: orders.emptyPickupStart,
@@ -69,6 +79,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         price: orders.price,
         createdAt: orders.createdAt,
       });
+
+    // Insert container data if provided (skip if table doesn't exist yet)
+    if (containers && containers.length > 0) {
+      try {
+        const containerInserts = containers
+          .filter((container: { containerType: "D2" | "D4" | "R2" | "R4"; quantity: number }) => container.quantity > 0)
+          .map((container: { containerType: "D2" | "D4" | "R2" | "R4"; quantity: number }) => ({
+            orderId: newOrder.id,
+            containerType: container.containerType,
+            quantity: container.quantity,
+          }));
+
+        if (containerInserts.length > 0) {
+          await db.insert(orderContainers).values(containerInserts);
+        }
+      } catch (_error) {
+        // Container data insertion failed - table may not exist, continuing without container data
+        // Continue without container data if table doesn't exist
+      }
+    }
 
     return NextResponse.json(
       {

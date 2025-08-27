@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { NewOrder } from "@/drizzle/schema";
 
 export const CreateOrderRequestSchema = z.object({
   customerId: z
@@ -9,6 +8,21 @@ export const CreateOrderRequestSchema = z.object({
   containerCode: z
     .string()
     .max(50, "Mã container không được vượt quá 50 ký tự")
+    .optional()
+    .or(z.literal("")),
+  shippingLine: z
+    .string()
+    .max(100, "Hãng tàu không được vượt quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
+  bookingNumber: z
+    .string()
+    .max(50, "Số booking không được vượt quá 50 ký tự")
+    .optional()
+    .or(z.literal("")),
+  oilQuantity: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Số dầu không hợp lệ")
     .optional()
     .or(z.literal("")),
   // Empty pickup vehicle and details
@@ -63,7 +77,11 @@ export const CreateOrderRequestSchema = z.object({
     .min(1, "Giá tiền là bắt buộc")
     .regex(/^\d+(\.\d{1,2})?$/, "Giá tiền không hợp lệ")
     .default("0"),
-}) satisfies z.ZodType<Omit<NewOrder, 'id' | 'createdAt' | 'updatedAt'>>;
+  containers: z.array(z.object({
+    containerType: z.enum(["D2", "D4", "R2", "R4"]),
+    quantity: z.number().min(0, "Số lượng không được âm").default(0),
+  })).optional().default([]),
+});
 
 export type CreateOrderRequest = z.infer<typeof CreateOrderRequestSchema>;
 
@@ -76,6 +94,21 @@ export const UpdateOrderRequestSchema = z.object({
   containerCode: z
     .string()
     .max(50, "Mã container không được vượt quá 50 ký tự")
+    .optional()
+    .or(z.literal("")),
+  shippingLine: z
+    .string()
+    .max(100, "Hãng tàu không được vượt quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
+  bookingNumber: z
+    .string()
+    .max(50, "Số booking không được vượt quá 50 ký tự")
+    .optional()
+    .or(z.literal("")),
+  oilQuantity: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Số dầu không hợp lệ")
     .optional()
     .or(z.literal("")),
   // Empty pickup vehicle and details
@@ -130,6 +163,10 @@ export const UpdateOrderRequestSchema = z.object({
     .min(1, "Giá tiền là bắt buộc")
     .regex(/^\d+(\.\d{1,2})?$/, "Giá tiền không hợp lệ")
     .optional(),
+  containers: z.array(z.object({
+    containerType: z.enum(["D2", "D4", "R2", "R4"]),
+    quantity: z.number().min(0, "Số lượng không được âm").default(0),
+  })).optional(),
 });
 
 export type UpdateOrderRequest = z.infer<typeof UpdateOrderRequestSchema>;
@@ -140,4 +177,18 @@ export const ORDER_STATUS_LABELS = {
   in_progress: "Đang thực hiện",
   completed: "Hoàn thành",
   cancelled: "Đã hủy",
+} as const;
+
+export const CONTAINER_TYPE_LABELS = {
+  D2: "20' Cainer",
+  D4: "40' Container", 
+  R2: "40' High Cube",
+  R4: "45' High Cube",
+} as const;
+
+export const CONTAINER_TYPE_DIMENSIONS = {
+  D2: "20 x 8 x 8 ft",
+  D4: "40 x 8 x 8 ft",
+  R2: "40 x 8 x 9.5 ft", 
+  R4: "45 x 8 x 9.5 ft",
 } as const;

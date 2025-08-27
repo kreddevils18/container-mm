@@ -12,6 +12,9 @@ export type UpdateOrderActionState = {
   fieldErrors?: {
     customerId?: string[];
     containerCode?: string[];
+    shippingLine?: string[];
+    bookingNumber?: string[];
+    oilQuantity?: string[];
     emptyPickupVehicleId?: string[];
     emptyPickupDate?: string[];
     emptyPickupStart?: string[];
@@ -23,6 +26,7 @@ export type UpdateOrderActionState = {
     description?: string[];
     status?: string[];
     price?: string[];
+    containers?: string[];
   };
 };
 
@@ -38,9 +42,23 @@ export async function updateOrderAction(
     return { success: false, error: "ID đơn hàng không hợp lệ" };
   }
 
+  const containersData = formData.get("containers");
+  let containers = [];
+  
+  if (containersData) {
+    try {
+      containers = JSON.parse(containersData as string);
+    } catch {
+      containers = [];
+    }
+  }
+
   const rawFormData = {
     customerId: formData.get("customerId"),
     containerCode: formData.get("containerCode"),
+    shippingLine: formData.get("shippingLine"),
+    bookingNumber: formData.get("bookingNumber"),
+    oilQuantity: formData.get("oilQuantity"),
     emptyPickupVehicleId: formData.get("emptyPickupVehicleId"),
     emptyPickupDate: formData.get("emptyPickupDate"),
     emptyPickupStart: formData.get("emptyPickupStart"),
@@ -52,6 +70,7 @@ export async function updateOrderAction(
     description: formData.get("description"),
     status: formData.get("status"),
     price: formData.get("price"),
+    containers,
   };
   logger.debug("Processing form data", { rawFormData });
 
@@ -85,6 +104,9 @@ export async function updateOrderAction(
         body: JSON.stringify({
           customerId: validatedFields.data.customerId,
           containerCode: validatedFields.data.containerCode,
+          shippingLine: validatedFields.data.shippingLine,
+          bookingNumber: validatedFields.data.bookingNumber,
+          oilQuantity: validatedFields.data.oilQuantity,
           emptyPickupVehicleId: validatedFields.data.emptyPickupVehicleId,
           emptyPickupDate: validatedFields.data.emptyPickupDate,
           emptyPickupStart: validatedFields.data.emptyPickupStart,
@@ -96,6 +118,7 @@ export async function updateOrderAction(
           description: validatedFields.data.description,
           status: validatedFields.data.status,
           price: validatedFields.data.price,
+          containers: validatedFields.data.containers,
         }),
       }
     );

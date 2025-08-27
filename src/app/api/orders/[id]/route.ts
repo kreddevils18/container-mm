@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, orderStatusHistory, orders } from "@/drizzle/schema";
+import { db, orderStatusHistory, orders, orderContainers } from "@/drizzle/schema";
 import { logger } from "@/lib/logger";
 import { UpdateOrderRequestSchema } from "@/schemas";
 
@@ -106,6 +106,9 @@ export async function PUT(
     const {
       customerId,
       containerCode,
+      shippingLine,
+      bookingNumber,
+      oilQuantity,
       emptyPickupVehicleId,
       emptyPickupDate,
       emptyPickupStart,
@@ -117,6 +120,7 @@ export async function PUT(
       description,
       status,
       price,
+      containers,
     } = validatedFields.data;
 
     const existingOrder = await db
@@ -144,6 +148,12 @@ export async function PUT(
     if (customerId !== undefined) updateData.customerId = customerId;
     if (containerCode !== undefined)
       updateData.containerCode = containerCode || null;
+    if (shippingLine !== undefined)
+      updateData.shippingLine = shippingLine || null;
+    if (bookingNumber !== undefined)
+      updateData.bookingNumber = bookingNumber || null;
+    if (oilQuantity !== undefined)
+      updateData.oilQuantity = oilQuantity || null;
     if (emptyPickupVehicleId !== undefined)
       updateData.emptyPickupVehicleId = emptyPickupVehicleId || null;
     if (emptyPickupDate !== undefined)
@@ -180,6 +190,9 @@ export async function PUT(
           id: orders.id,
           customerId: orders.customerId,
           containerCode: orders.containerCode,
+          shippingLine: orders.shippingLine,
+          bookingNumber: orders.bookingNumber,
+          oilQuantity: orders.oilQuantity,
           emptyPickupVehicleId: orders.emptyPickupVehicleId,
           emptyPickupDate: orders.emptyPickupDate,
           emptyPickupStart: orders.emptyPickupStart,
@@ -194,6 +207,32 @@ export async function PUT(
           createdAt: orders.createdAt,
           updatedAt: orders.updatedAt,
         });
+
+      // Update container data if provided (skip if table doesn't exist yet)
+      if (containers !== undefined) {
+        try {
+          // Delete existing containers for this order
+          await tx.delete(orderContainers).where(eq(orderContainers.orderId, id));
+
+          // Insert new container data
+          if (containers && containers.length > 0) {
+            const containerInserts = containers
+              .filter((container: { containerType: "D2" | "D4" | "R2" | "R4"; quantity: number }) => container.quantity > 0)
+              .map((container: { containerType: "D2" | "D4" | "R2" | "R4"; quantity: number }) => ({
+                orderId: id,
+                containerType: container.containerType,
+                quantity: container.quantity,
+              }));
+
+            if (containerInserts.length > 0) {
+              await tx.insert(orderContainers).values(containerInserts);
+            }
+          }
+        } catch (_error) {
+          // Container data update failed - table may not exist, continuing without container data
+          // Continue without container data if table doesn't exist
+        }
+      }
 
       // Create status history entry if status changed
       if (statusIsChanging && currentOrder && status) {

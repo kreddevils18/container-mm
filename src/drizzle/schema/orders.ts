@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   decimal,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -10,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { customers } from "./customers";
-import { orderStatusEnum } from "./enums";
+import { orderStatusEnum, containerTypeEnum } from "./enums";
 import { vehicles } from "./vehicles";
 
 export const orders = pgTable(
@@ -21,6 +22,9 @@ export const orders = pgTable(
       .references(() => customers.id)
       .notNull(),
     containerCode: varchar("container_code", { length: 50 }),
+    shippingLine: varchar("shipping_line", { length: 100 }),
+    bookingNumber: varchar("booking_number", { length: 50 }),
+    oilQuantity: decimal("oil_quantity", { precision: 10, scale: 2 }),
     emptyPickupVehicleId: uuid("empty_pickup_vehicle_id").references(
       () => vehicles.id
     ),
@@ -63,6 +67,21 @@ export const orderStatusHistory = pgTable("order_status_history", {
   newStatus: orderStatusEnum("new_status").notNull(),
   changedBy: uuid("changed_by").references(() => users.id),
   changedAt: timestamp("changed_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const orderContainers = pgTable("order_containers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id")
+    .references(() => orders.id, { onDelete: "cascade" })
+    .notNull(),
+  containerType: containerTypeEnum("container_type").notNull(),
+  quantity: integer("quantity").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });

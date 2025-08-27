@@ -35,3 +35,10 @@ export const costTypeStatusEnum = pgEnum("cost_type_status", [
   "active",
   "inactive",
 ]);
+
+export const containerTypeEnum = pgEnum("container_type", [
+  "D2",
+  "D4",
+  "R2",
+  "R4",
+]);

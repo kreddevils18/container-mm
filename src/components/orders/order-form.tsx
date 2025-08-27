@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CustomerCombobox } from "@/components/customers/customer-combobox";
 import { VehicleCombobox } from "@/components/vehicles/vehicle-combobox";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { ContainerSelector } from "./container-selector";
 import {
   Form,
   FormControl,
@@ -35,6 +36,9 @@ import {
 const _DEFAULT_ORDER_FORM_DATA: CreateOrderRequest = {
   customerId: "",
   containerCode: "",
+  shippingLine: "",
+  bookingNumber: "",
+  oilQuantity: "",
   emptyPickupVehicleId: "",
   emptyPickupDate: "",
   emptyPickupStart: "",
@@ -46,6 +50,7 @@ const _DEFAULT_ORDER_FORM_DATA: CreateOrderRequest = {
   description: "",
   status: "created",
   price: "0",
+  containers: [],
 };
 
 interface OrderFormProps {
@@ -82,6 +87,9 @@ export const OrderForm = ({
   submitLoadingText,
 }: OrderFormProps): ReactElement => {
   const containerCodeId = useId();
+  const shippingLineId = useId();
+  const bookingNumberId = useId();
+  const oilQuantityId = useId();
   const priceId = useId();
   const emptyPickupStartId = useId();
   const emptyPickupEndId = useId();
@@ -175,8 +183,8 @@ export const OrderForm = ({
 
         </div>
 
-        {/* Container Code and Price */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Container Code, Shipping Line, Booking Number */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <FormField
             control={form.control}
             name="containerCode"
@@ -197,6 +205,90 @@ export const OrderForm = ({
                 {serverFieldErrors?.containerCode && (
                   <div className="text-sm text-destructive">
                     {serverFieldErrors.containerCode.join(", ")}
+                  </div>
+                )}
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="shippingLine"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor={shippingLineId}>Hãng tàu</FormLabel>
+                <FormControl>
+                  <Input
+                    id={shippingLineId}
+                    name="shippingLine"
+                    placeholder="Nhập hãng tàu"
+                    disabled={isLoading}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+                {serverFieldErrors?.shippingLine && (
+                  <div className="text-sm text-destructive">
+                    {serverFieldErrors.shippingLine.join(", ")}
+                  </div>
+                )}
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="bookingNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor={bookingNumberId}>Số booking</FormLabel>
+                <FormControl>
+                  <Input
+                    id={bookingNumberId}
+                    name="bookingNumber"
+                    placeholder="Nhập số booking"
+                    disabled={isLoading}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+                {serverFieldErrors?.bookingNumber && (
+                  <div className="text-sm text-destructive">
+                    {serverFieldErrors.bookingNumber.join(", ")}
+                  </div>
+                )}
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Oil Quantity and Price */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="oilQuantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor={oilQuantityId}>Số dầu (lít)</FormLabel>
+                <FormControl>
+                  <Input
+                    id={oilQuantityId}
+                    name="oilQuantity"
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    disabled={isLoading}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+                {serverFieldErrors?.oilQuantity && (
+                  <div className="text-sm text-destructive">
+                    {serverFieldErrors.oilQuantity.join(", ")}
                   </div>
                 )}
               </FormItem>
@@ -233,6 +325,37 @@ export const OrderForm = ({
             )}
           />
         </div>
+
+        {/* Container Management */}
+        <FormField
+          control={form.control}
+          name="containers"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Container</FormLabel>
+              <FormControl>
+                <ContainerSelector
+                  value={field.value || []}
+                  onChange={field.onChange}
+                  disabled={isLoading}
+                />
+              </FormControl>
+              {action && (
+                <Input
+                  type="hidden"
+                  name="containers"
+                  value={JSON.stringify(field.value || [])}
+                />
+              )}
+              <FormMessage />
+              {serverFieldErrors?.containers && (
+                <div className="text-sm text-destructive">
+                  {serverFieldErrors.containers.join(", ")}
+                </div>
+              )}
+            </FormItem>
+          )}
+        />
 
         {/* Empty Pickup Section */}
         <div className="border rounded-lg p-4 space-y-4">

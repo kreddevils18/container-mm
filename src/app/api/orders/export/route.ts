@@ -1,18 +1,35 @@
+import { inArray } from "drizzle-orm";
+import ExcelJS from "exceljs";
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  type ColumnDef,
-  createExcelService,
-  defaultFormatters,
-  defaultStyles,
-  ExcelJSDriver,
-  FormatterRegistry,
-  StyleRegistry,
-} from "@/lib/excel";
-import { ORDER_STATUS_LABELS } from "@/schemas/order";
+import { db, orderContainers } from "@/drizzle/schema";
 import {
   getOrderCostTypes,
   getOrdersToExportWithCosts,
 } from "@/services/orders/getOrdersToExportWithCosts";
+
+interface OrderExportData {
+  id: string;
+  shippingLine: string | null;
+  customerName: string;
+  containerCode: string | null;
+  bookingNumber: string | null;
+  emptyPickupStart: string | null;
+  emptyPickupDate: Date | null;
+  emptyPickupDriverName: string | null;
+  emptyPickupVehiclePlate: string | null;
+  containers: { D2: number; D4: number; R2: number; R4: number };
+  emptyPickupEnd: string | null;
+  deliveryDate: Date | null;
+  deliveryDriverName: string | null;
+  deliveryVehiclePlate: string | null;
+  deliveryEnd: string | null;
+  price: string;
+  oilQuantity: string | null;
+  costs: Record<string, string>;
+  totalCosts: number;
+  profit: number;
+  description: string | null;
+}
 
 export async function GET(request: NextRequest): Promise<Response> {
   try {
@@ -23,400 +40,425 @@ export async function GET(request: NextRequest): Promise<Response> {
     const orderCostTypes = await getOrderCostTypes();
 
     // Get orders with cost data
-    const data = await getOrdersToExportWithCosts(params);
+    const ordersData = await getOrdersToExportWithCosts(params);
 
-    if (!data || data.length === 0) {
+    if (!ordersData || ordersData.length === 0) {
       return NextResponse.json(
         { error: "Không có dữ liệu để xuất" },
         { status: 404 }
       );
     }
 
-    const exportData = data.map((order) => {
-      // Base order data
-      const baseData = {
-        "Mã container": order.containerCode || "",
-        "Khách hàng": order.customerName,
-        "Xe lấy rỗng": order.emptyPickupVehiclePlate || "",
-        "Xe hạ hàng": order.deliveryVehiclePlate || "",
-        "Ngày lấy rỗng": order.emptyPickupDate
-          ? new Date(order.emptyPickupDate).toLocaleDateString("vi-VN")
-          : "",
-        "Điểm đầu lấy rỗng": order.emptyPickupStart || "",
-        "Điểm cuối lấy rỗng": order.emptyPickupEnd || "",
-        "Ngày hạ hàng": order.deliveryDate
-          ? new Date(order.deliveryDate).toLocaleDateString("vi-VN")
-          : "",
-        "Điểm đầu hạ hàng": order.deliveryStart || "",
-        "Điểm cuối hạ hàng": order.deliveryEnd || "",
-        "Trạng thái":
-          ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS],
-        "Mô tả": order.description || "",
-        "Ngày tạo": new Date(order.createdAt).toLocaleDateString("vi-VN"),
-        "Ngày cập nhật": new Date(order.updatedAt).toLocaleDateString("vi-VN"),
-        "Giá tiền": new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
-        }).format(parseFloat(order.price)),
+    // Get all order IDs for container data
+    const orderIds = ordersData.map((order) => order.id);
+
+    // Get container data for all orders (skip if table doesn't exist yet)
+    let containerData: {
+      orderId: string;
+      containerType: "D2" | "D4" | "R2" | "R4";
+      quantity: number;
+    }[] = [];
+    try {
+      containerData = await db
+        .select()
+        .from(orderContainers)
+        .where(inArray(orderContainers.orderId, orderIds));
+    } catch (_error) {
+      // Container data query failed - table may not exist, continuing without container data
+      // Continue without container data if table doesn't exist
+    }
+
+    // Process data for export
+    const exportData: OrderExportData[] = ordersData.map((order) => {
+      // Get container quantities
+      const orderContainerData = containerData.filter(
+        (c) => c.orderId === order.id
+      );
+      const containers = {
+        D2:
+          orderContainerData.find((c) => c.containerType === "D2")?.quantity ||
+          0,
+        D4:
+          orderContainerData.find((c) => c.containerType === "D4")?.quantity ||
+          0,
+        R2:
+          orderContainerData.find((c) => c.containerType === "R2")?.quantity ||
+          0,
+        R4:
+          orderContainerData.find((c) => c.containerType === "R4")?.quantity ||
+          0,
       };
 
-      // Add dynamic cost columns
-      const costData: Record<string, string> = {};
+      // Calculate total costs and profit
       let totalOrderCosts = 0;
-
-      orderCostTypes.forEach((costType) => {
-        const costAmount = order.costs[costType.name] || null;
-        const columnKey = `Chi phí ${costType.name}`;
-
-        if (costAmount && costAmount !== "0") {
-          const costValue = parseFloat(costAmount);
-          totalOrderCosts += costValue;
-
-          costData[columnKey] = new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-          }).format(costValue);
-        } else {
-          // Empty string for orders without this cost type (as requested)
-          costData[columnKey] = "";
+      Object.values(order.costs).forEach((cost) => {
+        if (cost && cost !== "0") {
+          totalOrderCosts += parseFloat(cost);
         }
       });
 
-      // Calculate profit: order price minus total costs
       const orderPrice = parseFloat(order.price);
       const profit = orderPrice - totalOrderCosts;
 
-      const profitData = {
-        "Lợi nhuận": new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
-        }).format(profit),
+      return {
+        id: order.id,
+        shippingLine: order.shippingLine,
+        customerName: order.customerName,
+        containerCode: order.containerCode,
+        bookingNumber: order.bookingNumber,
+        emptyPickupStart: order.emptyPickupStart,
+        emptyPickupDate: order.emptyPickupDate
+          ? new Date(order.emptyPickupDate)
+          : null,
+        emptyPickupDriverName: order.emptyPickupDriverName,
+        emptyPickupVehiclePlate: order.emptyPickupVehiclePlate,
+        containers,
+        emptyPickupEnd: order.emptyPickupEnd,
+        deliveryDate: order.deliveryDate ? new Date(order.deliveryDate) : null,
+        deliveryDriverName: order.deliveryDriverName,
+        deliveryVehiclePlate: order.deliveryVehiclePlate,
+        deliveryEnd: order.deliveryEnd,
+        price: order.price,
+        oilQuantity: order.oilQuantity,
+        costs: order.costs,
+        totalCosts: totalOrderCosts,
+        profit,
+        description: order.description,
       };
-
-      return { ...baseData, ...costData, ...profitData };
     });
 
-    // Define base columns for Excel export with color-coded headers
-    const baseColumns: ColumnDef<(typeof exportData)[0]>[] = [
-      // General information - Light blue headers
-      {
-        key: "Khách hàng",
-        header: "Khách hàng",
-        accessor: (row) => row["Khách hàng"],
-        width: 25,
-        headerStyle: "header-general",
-      },
-      {
-        key: "Mã container",
-        header: "Mã container",
-        accessor: (row) => row["Mã container"],
-        width: 15,
-        headerStyle: "header-general",
-      },
-      {
-        key: "Trạng thái",
-        header: "Trạng thái",
-        accessor: (row) => row["Trạng thái"],
-        width: 15,
-        headerStyle: "header-general",
-      },
-      {
-        key: "Mô tả",
-        header: "Mô tả",
-        accessor: (row) => row["Mô tả"],
-        width: 30,
-        headerStyle: "header-general",
-      },
-      {
-        key: "Ngày tạo",
-        header: "Ngày tạo",
-        accessor: (row) => row["Ngày tạo"],
-        width: 15,
-        headerStyle: "header-general",
-      },
-      {
-        key: "Ngày cập nhật",
-        header: "Ngày cập nhật",
-        accessor: (row) => row["Ngày cập nhật"],
-        width: 15,
-        headerStyle: "header-general",
-      },
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Danh sách đơn hàng");
 
-      // Empty pickup information - Light green headers
-      {
-        key: "Xe lấy rỗng",
-        header: "Xe lấy rỗng",
-        accessor: (row) => row["Xe lấy rỗng"],
-        width: 15,
-        headerStyle: "header-pickup",
-      },
-      {
-        key: "Ngày lấy rỗng",
-        header: "Ngày lấy rỗng",
-        accessor: (row) => row["Ngày lấy rỗng"],
-        width: 15,
-        headerStyle: "header-pickup",
-      },
-      {
-        key: "Điểm đầu lấy rỗng",
-        header: "Điểm đầu lấy rỗng",
-        accessor: (row) => row["Điểm đầu lấy rỗng"],
-        width: 25,
-        headerStyle: "header-pickup",
-      },
-      {
-        key: "Điểm cuối lấy rỗng",
-        header: "Điểm cuối lấy rỗng",
-        accessor: (row) => row["Điểm cuối lấy rỗng"],
-        width: 25,
-        headerStyle: "header-pickup",
-      },
-
-      // Delivery information - Light orange headers
-      {
-        key: "Xe hạ hàng",
-        header: "Xe hạ hàng",
-        accessor: (row) => row["Xe hạ hàng"],
-        width: 15,
-        headerStyle: "header-delivery",
-      },
-      {
-        key: "Ngày hạ hàng",
-        header: "Ngày hạ hàng",
-        accessor: (row) => row["Ngày hạ hàng"],
-        width: 15,
-        headerStyle: "header-delivery",
-      },
-      {
-        key: "Điểm đầu hạ hàng",
-        header: "Điểm đầu hạ hàng",
-        accessor: (row) => row["Điểm đầu hạ hàng"],
-        width: 25,
-        headerStyle: "header-delivery",
-      },
-      {
-        key: "Điểm cuối hạ hàng",
-        header: "Điểm cuối hạ hàng",
-        accessor: (row) => row["Điểm cuối hạ hàng"],
-        width: 25,
-        headerStyle: "header-delivery",
-      },
+    // Define column structure
+    const baseColumns = [
+      { key: "shippingLine", header: "Hãng tàu" },
+      { key: "customerName", header: "Khách hàng" },
+      { key: "containerCode", header: "Số cont" },
+      { key: "bookingNumber", header: "Số Booking" },
+      { key: "emptyPickupStart", header: "Địa điểm lấy rỗng" },
+      { key: "emptyPickupDate", header: "Ngày lấy rỗng" },
+      { key: "emptyPickupDriverName", header: "Tài xế kéo về" },
+      { key: "emptyPickupVehiclePlate", header: "Số xe" },
     ];
 
-    // Financial columns - Price column with cost styling
-    const priceColumn: ColumnDef<Record<string, unknown>> = {
-      key: "Giá tiền",
-      header: "Giá tiền",
-      accessor: (row: Record<string, unknown>) => row["Giá tiền"] as string,
-      width: 15,
-      headerStyle: "header-cost",
+    const containerColumns = [
+      { key: "D2", header: "D2" },
+      { key: "D4", header: "D4" },
+      { key: "R2", header: "R2" },
+      { key: "R4", header: "R4" },
+    ];
+
+    const transportColumns = [
+      { key: "emptyPickupEnd", header: "Gác kho" },
+      { key: "deliveryDate", header: "Ngày kéo hàng đi hạ cảng" },
+      { key: "deliveryDriverName", header: "Tài xế kéo đi" },
+      { key: "deliveryVehiclePlate", header: "Số xe" },
+      { key: "deliveryEnd", header: "Hạ Cảng" },
+      { key: "price", header: "Giá cước" },
+      { key: "oilQuantity", header: "Dầu(lít)" },
+    ];
+
+    const costColumns = orderCostTypes.map((costType) => ({
+      key: `cost_${costType.name}`,
+      header: costType.name,
+    }));
+
+    const finalColumns = [
+      { key: "totalCosts", header: "Tổng chi phí" },
+      { key: "profit", header: "Lợi nhuận" },
+      { key: "description", header: "Ghi chú" },
+    ];
+
+    const allColumns = [
+      ...baseColumns,
+      ...containerColumns,
+      ...transportColumns,
+      ...costColumns,
+      ...finalColumns,
+    ];
+
+    // Set up columns
+    worksheet.columns = allColumns.map((col) => ({ key: col.key, width: 15 }));
+
+    // Add empty first row and title row
+    worksheet.addRow([]);
+    const titleRow = worksheet.addRow(["DANH SÁCH ĐƠN HÀNG"]);
+
+    // Merge title row across all columns
+    worksheet.mergeCells(2, 1, 2, allColumns.length);
+    titleRow.getCell(1).alignment = {
+      horizontal: "center",
+      vertical: "middle",
     };
+    titleRow.getCell(1).font = { size: 16, bold: true };
+    titleRow.height = 30;
 
-    // Generate dynamic cost columns - Light red headers
-    const costColumns: ColumnDef<Record<string, unknown>>[] = orderCostTypes.map((costType) => {
-      const columnKey = `Chi phí ${costType.name}`;
-      return {
-        key: columnKey,
-        header: columnKey,
-        accessor: (row: Record<string, unknown>) => (row[columnKey] as string) || "",
-        width: Math.max(20, costType.name.length + 10), // Dynamic width based on cost type name
-        headerStyle: "header-cost",
-      };
+    // Create header rows
+    const headerRow1 = worksheet.addRow([]);
+    const headerRow2 = worksheet.addRow([]);
+
+    // Row 1 - Merged headers
+    let colIndex = 1;
+
+    // Basic info (no merge for now - individual headers)
+    baseColumns.forEach(() => {
+      headerRow1.getCell(colIndex).value = "";
+      colIndex++;
     });
 
-    // Add profit column - Light yellow/gold header
-    const profitColumn: ColumnDef<Record<string, unknown>> = {
-      key: "Lợi nhuận",
-      header: "Lợi nhuận",
-      accessor: (row: Record<string, unknown>) => (row["Lợi nhuận"] as string) || "",
-      width: 20,
-      headerStyle: "header-profit",
-    };
-
-    // Combine base columns with financial columns (price, costs, profit)
-    const columns = [...baseColumns, priceColumn, ...costColumns, profitColumn];
-
-    // Create style and formatter registries
-    const styleRegistry = new StyleRegistry();
-    defaultStyles(styleRegistry);
-
-    // Register custom header styles for different categories
-    // General info headers - Light blue
-    styleRegistry.register("header-general", {
-      font: {
-        bold: true,
-        size: 11,
-        name: "Calibri",
-        color: { argb: "FF000000" }
-      },
-      fill: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFD6E3F0" } // Light blue
-      },
-      alignment: {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      },
-      border: {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } }
-      }
-    });
-
-    // Empty pickup headers - Light green
-    styleRegistry.register("header-pickup", {
-      font: {
-        bold: true,
-        size: 11,
-        name: "Calibri",
-        color: { argb: "FF000000" }
-      },
-      fill: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE2F0E2" } // Light green
-      },
-      alignment: {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      },
-      border: {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } }
-      }
-    });
-
-    // Delivery headers - Light orange
-    styleRegistry.register("header-delivery", {
-      font: {
-        bold: true,
-        size: 11,
-        name: "Calibri",
-        color: { argb: "FF000000" }
-      },
-      fill: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFDE7CC" } // Light orange
-      },
-      alignment: {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      },
-      border: {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } }
-      }
-    });
-
-    // Cost headers - Light red
-    styleRegistry.register("header-cost", {
-      font: {
-        bold: true,
-        size: 11,
-        name: "Calibri",
-        color: { argb: "FF000000" }
-      },
-      fill: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFDE7E7" } // Light red/pink
-      },
-      alignment: {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      },
-      border: {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } }
-      }
-    });
-
-    // Profit header - Light yellow/gold
-    styleRegistry.register("header-profit", {
-      font: {
-        bold: true,
-        size: 11,
-        name: "Calibri",
-        color: { argb: "FF000000" }
-      },
-      fill: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFFF2CC" } // Light yellow/gold
-      },
-      alignment: {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      },
-      border: {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } }
-      }
-    });
-
-    const formatterRegistry = new FormatterRegistry();
-    defaultFormatters(formatterRegistry);
-
-    // Create Excel service
-    const excelService = createExcelService({
-      driver: new ExcelJSDriver(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      styles: styleRegistry as any,
-      formatters: formatterRegistry,
-    });
-
-    // Generate Excel buffer
-    const buffer = await excelService.generate(
-      {
-        filename: `danh-sach-don-hang-${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}`,
-        creator: "Container Management System",
-      },
-      [
-        {
-          spec: {
-            name: "Danh sách đơn hàng",
-            columns,
-            autoFilter: true,
-            freeze: { row: 1 },
-          },
-          rows: exportData,
-        },
-      ],
-      "memory"
+    // LOẠI CONT header (merge across D2, D4, R2, R4)
+    const containerStartCol = colIndex;
+    headerRow1.getCell(colIndex).value = "LOẠI CONT";
+    worksheet.mergeCells(
+      3,
+      containerStartCol,
+      3,
+      containerStartCol + containerColumns.length - 1
     );
 
-    // Create Vietnamese filename
+    // Style LOẠI CONT header with yellow background
+    for (
+      let i = containerStartCol;
+      i < containerStartCol + containerColumns.length;
+      i++
+    ) {
+      const cell = headerRow1.getCell(i);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFFF00" }, // Yellow
+      };
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    }
+    colIndex += containerColumns.length;
+
+    // Transport info (no merge for now)
+    transportColumns.forEach(() => {
+      headerRow1.getCell(colIndex).value = "";
+      colIndex++;
+    });
+
+    // CHI PHÍ header (merge across cost columns)
+    if (costColumns.length > 0) {
+      const costStartCol = colIndex;
+      headerRow1.getCell(colIndex).value = "CHI PHÍ";
+      worksheet.mergeCells(
+        3,
+        costStartCol,
+        3,
+        costStartCol + costColumns.length - 1
+      );
+
+      // Style CHI PHÍ header
+      for (let i = costStartCol; i < costStartCol + costColumns.length; i++) {
+        const cell = headerRow1.getCell(i);
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" }, // Yellow
+        };
+        cell.font = { bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      }
+      colIndex += costColumns.length;
+    }
+
+    // Final columns (no merge)
+    finalColumns.forEach(() => {
+      headerRow1.getCell(colIndex).value = "";
+      colIndex++;
+    });
+
+    // Row 2 - Individual column headers
+    colIndex = 1;
+    allColumns.forEach((col) => {
+      const cell = headerRow2.getCell(colIndex);
+      cell.value = col.header;
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+
+      // Set background color based on column type
+      if (
+        colIndex >= containerStartCol &&
+        colIndex < containerStartCol + containerColumns.length
+      ) {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" }, // Yellow for container columns
+        };
+      }
+
+      colIndex++;
+    });
+
+    // Add data rows
+    exportData.forEach((order) => {
+      const rowData: any[] = [];
+
+      // Basic columns
+      rowData.push(
+        order.shippingLine || "",
+        order.customerName,
+        order.containerCode || "",
+        order.bookingNumber || "",
+        order.emptyPickupStart || "",
+        order.emptyPickupDate
+          ? order.emptyPickupDate.toLocaleDateString("vi-VN")
+          : "",
+        order.emptyPickupDriverName || "",
+        order.emptyPickupVehiclePlate || ""
+      );
+
+      // Container quantities
+      rowData.push(
+        order.containers.D2 || 0,
+        order.containers.D4 || 0,
+        order.containers.R2 || 0,
+        order.containers.R4 || 0
+      );
+
+      // Transport columns
+      rowData.push(
+        order.emptyPickupEnd || "",
+        order.deliveryDate
+          ? order.deliveryDate.toLocaleDateString("vi-VN")
+          : "",
+        order.deliveryDriverName || "",
+        order.deliveryVehiclePlate || "",
+        order.deliveryEnd || "",
+        new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(parseFloat(order.price)),
+        order.oilQuantity || ""
+      );
+
+      // Cost columns
+      orderCostTypes.forEach((costType) => {
+        const costValue = order.costs[costType.name] || null;
+        if (costValue && costValue !== "0") {
+          rowData.push(
+            new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(parseFloat(costValue))
+          );
+        } else {
+          rowData.push("");
+        }
+      });
+
+      // Final columns
+      rowData.push(
+        new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(order.totalCosts),
+        new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(order.profit),
+        order.description || ""
+      );
+
+      worksheet.addRow(rowData);
+    });
+
+    // Set row heights
+    headerRow1.height = 25;
+    headerRow2.height = 25;
+
+    // Auto-fit columns
+    worksheet.columns.forEach((column) => {
+      if (column.key === "description") {
+        column.width = 30;
+      } else if (
+        column.key === "emptyPickupStart" ||
+        column.key === "deliveryEnd"
+      ) {
+        column.width = 25;
+      } else {
+        column.width = 15;
+      }
+    });
+
+    // Add border around the data table (not including title rows)
+    const dataStartRow = 3; // Start from header row 1
+    const dataEndRow = 4 + exportData.length; // End at last data row
+    const dataStartCol = 1;
+    const dataEndCol = allColumns.length;
+
+    // Apply outer border
+    for (let row = dataStartRow; row <= dataEndRow; row++) {
+      for (let col = dataStartCol; col <= dataEndCol; col++) {
+        const cell = worksheet.getCell(row, col);
+
+        // Top border
+        if (row === dataStartRow) {
+          cell.border = {
+            ...cell.border,
+            top: { style: "thick", color: { argb: "000000" } },
+          };
+        }
+
+        // Bottom border
+        if (row === dataEndRow) {
+          cell.border = {
+            ...cell.border,
+            bottom: { style: "thick", color: { argb: "000000" } },
+          };
+        }
+
+        // Left border
+        if (col === dataStartCol) {
+          cell.border = {
+            ...cell.border,
+            left: { style: "thick", color: { argb: "000000" } },
+          };
+        }
+
+        // Right border
+        if (col === dataEndCol) {
+          cell.border = {
+            ...cell.border,
+            right: { style: "thick", color: { argb: "000000" } },
+          };
+        }
+      }
+    }
+
+    // Generate buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // Create filename
     const filename = `danh-sach-don-hang-${new Date()
       .toLocaleDateString("vi-VN")
       .replace(/\//g, "-")}.xlsx`;
     const encodedFilename = encodeURIComponent(filename);
 
-    // Handle buffer validation
-    if (!buffer) {
-      return NextResponse.json(
-        { error: "Không thể tạo file Excel" },
-        { status: 500 }
-      );
-    }
-
-    // Return Excel file with proper headers
+    // Return Excel file
     return new Response(buffer as BodyInit, {
       status: 200,
       headers: {
@@ -428,6 +470,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       },
     });
   } catch (error) {
+    // Export error occurred, returning error response
     return NextResponse.json(
       {
         error: "Có lỗi xảy ra khi xuất dữ liệu đơn hàng",

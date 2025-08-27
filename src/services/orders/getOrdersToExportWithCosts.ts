@@ -35,9 +35,14 @@ export interface OrderCostAggregation {
 export interface OrderExportData {
   id: string;
   containerCode: string | null;
+  shippingLine: string | null;
+  bookingNumber: string | null;
+  oilQuantity: string | null;
   customerName: string;
   emptyPickupVehiclePlate: string | null;
+  emptyPickupDriverName: string | null;
   deliveryVehiclePlate: string | null;
+  deliveryDriverName: string | null;
   emptyPickupDate: Date | null;
   emptyPickupStart: string | null;
   emptyPickupEnd: string | null;
@@ -118,9 +123,14 @@ export async function getOrdersToExportWithCosts(
     .select({
       id: orders.id,
       containerCode: orders.containerCode,
+      shippingLine: orders.shippingLine,
+      bookingNumber: orders.bookingNumber,
+      oilQuantity: orders.oilQuantity,
       customerName: customers.name,
       emptyPickupVehiclePlate: emptyPickupVehicle.licensePlate,
+      emptyPickupDriverName: emptyPickupVehicle.driverName,
       deliveryVehiclePlate: deliveryVehicle.licensePlate,
+      deliveryDriverName: deliveryVehicle.driverName,
       emptyPickupDate: orders.emptyPickupDate,
       emptyPickupStart: orders.emptyPickupStart,
       emptyPickupEnd: orders.emptyPickupEnd,

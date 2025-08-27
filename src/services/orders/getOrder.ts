@@ -5,6 +5,7 @@ import {
   costs,
   costTypes,
   customers,
+  orderContainers,
   orderStatusHistory,
   orders,
   users,
@@ -18,6 +19,9 @@ export async function getOrder(id: string) {
     .select({
       id: orders.id,
       containerCode: orders.containerCode,
+      shippingLine: orders.shippingLine,
+      bookingNumber: orders.bookingNumber,
+      oilQuantity: orders.oilQuantity,
       customerId: orders.customerId,
       customerName: customers.name,
       customerPhone: customers.phone,
@@ -25,8 +29,10 @@ export async function getOrder(id: string) {
       customerAddress: customers.address,
       emptyPickupVehicleId: orders.emptyPickupVehicleId,
       emptyPickupVehiclePlate: sql<string>`pickup_vehicle.license_plate`,
+      emptyPickupDriverName: sql<string>`pickup_vehicle.driver_name`,
       deliveryVehicleId: orders.deliveryVehicleId,
       deliveryVehiclePlate: sql<string>`delivery_vehicle.license_plate`,
+      deliveryDriverName: sql<string>`delivery_vehicle.driver_name`,
       emptyPickupDate: orders.emptyPickupDate,
       emptyPickupStart: orders.emptyPickupStart,
       emptyPickupEnd: orders.emptyPickupEnd,
@@ -89,9 +95,25 @@ export async function getOrder(id: string) {
     .where(eq(orderStatusHistory.orderId, id))
     .orderBy(orderStatusHistory.changedAt);
 
+  // Get container data (skip if table doesn't exist yet)
+  let containers: { containerType: "D2" | "D4" | "R2" | "R4"; quantity: number }[] = [];
+  try {
+    containers = await db
+      .select({
+        containerType: orderContainers.containerType,
+        quantity: orderContainers.quantity,
+      })
+      .from(orderContainers)
+      .where(eq(orderContainers.orderId, id))
+      .orderBy(orderContainers.containerType);
+  } catch (_error) {
+    // Container data query failed - table may not exist, continuing without container data
+  }
+
   return {
     ...order,
     costs: orderCosts,
     statusHistory,
+    containers,
   };
 }
