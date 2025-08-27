@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import type { Cost, CostType } from "@/drizzle/schema";
 import { formatCostAmount, formatCostDate } from "@/schemas/cost";
+import { Button } from "../ui/button";
 import { CostActions } from "./cost-actions";
 
 interface CostTableProps {
@@ -88,13 +89,13 @@ export function CostTable({
           <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
           <p className="text-sm text-destructive mb-2">{error}</p>
           {onRetry && (
-            <button
+            <Button
               type="button"
               onClick={onRetry}
               className="text-sm text-primary underline"
             >
               Thử lại
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -89,9 +89,27 @@ export async function getOrders(params: Record<string, unknown>) {
   const where = and(
     f.q
       ? sql`(
-      unaccent(${orders.containerCode}) ilike unaccent(${`%${f.q}%`}) OR
-      unaccent(${customers.name}) ilike unaccent(${`%${f.q}%`}) OR
-      unaccent(${orders.description}) ilike unaccent(${`%${f.q}%`})
+        -- Use existing FTS indexes for fast search
+        (
+          setweight(to_tsvector('simple', COALESCE(${orders.containerCode}, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(${orders.description}, '')), 'B')
+        ) @@ plainto_tsquery('simple', ${f.q}) OR
+        (
+          setweight(to_tsvector('simple', COALESCE(${customers.name}, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(${customers.email}, '')), 'B') ||
+          setweight(to_tsvector('simple', COALESCE(${customers.address}, '')), 'C') ||
+          setweight(to_tsvector('simple', COALESCE(${customers.taxId}, '')), 'D')
+        ) @@ plainto_tsquery('simple', ${f.q}) OR
+        (
+          setweight(to_tsvector('simple', COALESCE(pickup_vehicle.license_plate, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(pickup_vehicle.driver_name, '')), 'B') ||
+          setweight(to_tsvector('simple', COALESCE(pickup_vehicle.driver_phone, '')), 'C')
+        ) @@ plainto_tsquery('simple', ${f.q}) OR
+        (
+          setweight(to_tsvector('simple', COALESCE(delivery_vehicle.license_plate, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(delivery_vehicle.driver_name, '')), 'B') ||
+          setweight(to_tsvector('simple', COALESCE(delivery_vehicle.driver_phone, '')), 'C')
+        ) @@ plainto_tsquery('simple', ${f.q})
     )`
       : undefined,
     f.status?.length ? inArray(orders.status, f.status) : undefined,
@@ -159,6 +177,14 @@ export async function getOrders(params: Record<string, unknown>) {
       .select({ count: sql<number>`count(*)` })
       .from(orders)
       .innerJoin(customers, eq(orders.customerId, customers.id))
+      .leftJoin(
+        sql`${vehicles} AS pickup_vehicle`,
+        sql`pickup_vehicle.id = ${orders.emptyPickupVehicleId}`
+      )
+      .leftJoin(
+        sql`${vehicles} AS delivery_vehicle`,
+        sql`delivery_vehicle.id = ${orders.deliveryVehicleId}`
+      )
       .where(where),
   ]);
 

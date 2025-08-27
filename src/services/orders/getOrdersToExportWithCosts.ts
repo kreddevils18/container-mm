@@ -1,36 +1,37 @@
-import { unstable_noStore as noStore } from "next/cache";
-import { and, ilike, inArray, gte, lte, desc, asc, eq, or, sum } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  lte,
+  or,
+  sum,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { unstable_noStore as noStore } from "next/cache";
 import { db } from "@/drizzle/client";
-import { orders } from "@/drizzle/schema/orders";
+import { costs, costTypes } from "@/drizzle/schema/costs";
 import { customers } from "@/drizzle/schema/customers";
+import { orders } from "@/drizzle/schema/orders";
 import { vehicles } from "@/drizzle/schema/vehicles";
-import { costs } from "@/drizzle/schema/costs";
-import { costTypes } from "@/drizzle/schema/costs";
-import { orderFilterSchema } from "./getOrders";
 import { logger } from "@/lib/logger";
+import { orderFilterSchema } from "./getOrders";
 
-/**
- * Cost type information for export columns
- */
 export interface CostTypeForExport {
   id: string;
   name: string;
   category: string;
 }
 
-/**
- * Order cost aggregation for export
- */
 export interface OrderCostAggregation {
   orderId: string;
   costTypeName: string;
   totalAmount: string; // decimal as string
 }
 
-/**
- * Order export data with costs
- */
 export interface OrderExportData {
   id: string;
   containerCode: string | null;
@@ -56,7 +57,7 @@ export interface OrderExportData {
  */
 export async function getOrderCostTypes(): Promise<CostTypeForExport[]> {
   noStore();
-  
+
   const orderCostTypes = await db
     .select({
       id: costTypes.id,
@@ -64,12 +65,7 @@ export async function getOrderCostTypes(): Promise<CostTypeForExport[]> {
       category: costTypes.category,
     })
     .from(costTypes)
-    .where(
-      and(
-        eq(costTypes.category, "order"),
-        eq(costTypes.status, "active")
-      )
-    )
+    .where(and(eq(costTypes.category, "order"), eq(costTypes.status, "active")))
     .orderBy(asc(costTypes.name));
 
   return orderCostTypes;
@@ -79,14 +75,16 @@ export async function getOrderCostTypes(): Promise<CostTypeForExport[]> {
  * Get orders with aggregated cost data for export
  * This service includes cost information aggregated by cost type
  */
-export async function getOrdersToExportWithCosts(params: Record<string, unknown>) {
+export async function getOrdersToExportWithCosts(
+  params: Record<string, unknown>
+) {
   noStore();
 
   const parsed = orderFilterSchema.safeParse(params);
   if (!parsed.success) {
     logger.error("Order export with costs filter validation failed", {
       issues: parsed.error.issues,
-      params
+      params,
     });
     throw new Error("Invalid order export filters");
   }
@@ -99,17 +97,17 @@ export async function getOrdersToExportWithCosts(params: Record<string, unknown>
   const where = and(
     f.q
       ? or(
-          ilike(orders.containerCode, `%${f.q}%`),
-          ilike(customers.name, `%${f.q}%`)
-        )
+        ilike(orders.containerCode, `%${f.q}%`),
+        ilike(customers.name, `%${f.q}%`)
+      )
       : undefined,
     f.status?.length ? inArray(orders.status, f.status) : undefined,
     f.customerId ? eq(orders.customerId, f.customerId) : undefined,
-    f.vehicleId 
+    f.vehicleId
       ? or(
-          eq(orders.emptyPickupVehicleId, f.vehicleId),
-          eq(orders.deliveryVehicleId, f.vehicleId)
-        )
+        eq(orders.emptyPickupVehicleId, f.vehicleId),
+        eq(orders.deliveryVehicleId, f.vehicleId)
+      )
       : undefined,
     f.from ? gte(orders.createdAt, new Date(f.from)) : undefined,
     f.to ? lte(orders.createdAt, new Date(f.to)) : undefined
@@ -137,17 +135,26 @@ export async function getOrdersToExportWithCosts(params: Record<string, unknown>
     })
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))
-    .leftJoin(emptyPickupVehicle, eq(orders.emptyPickupVehicleId, emptyPickupVehicle.id))
+    .leftJoin(
+      emptyPickupVehicle,
+      eq(orders.emptyPickupVehicleId, emptyPickupVehicle.id)
+    )
     .leftJoin(deliveryVehicle, eq(orders.deliveryVehicleId, deliveryVehicle.id))
     .where(where)
     .orderBy(
-      f.sort === "createdAt.desc" ? desc(orders.createdAt)
-    : f.sort === "createdAt.asc"  ? asc(orders.createdAt)
-    : f.sort === "containerCode.asc" ? asc(orders.containerCode)
-    : f.sort === "containerCode.desc" ? desc(orders.containerCode)
-    : f.sort === "price.asc" ? asc(orders.price)
-    : f.sort === "price.desc" ? desc(orders.price)
-    :                           desc(orders.createdAt)
+      f.sort === "createdAt.desc"
+        ? desc(orders.createdAt)
+        : f.sort === "createdAt.asc"
+          ? asc(orders.createdAt)
+          : f.sort === "containerCode.asc"
+            ? asc(orders.containerCode)
+            : f.sort === "containerCode.desc"
+              ? desc(orders.containerCode)
+              : f.sort === "price.asc"
+                ? asc(orders.price)
+                : f.sort === "price.desc"
+                  ? desc(orders.price)
+                  : desc(orders.createdAt)
     );
 
   if (orderRows.length === 0) {
@@ -155,7 +162,7 @@ export async function getOrdersToExportWithCosts(params: Record<string, unknown>
   }
 
   // Get order IDs for cost aggregation
-  const orderIds = orderRows.map(order => order.id);
+  const orderIds = orderRows.map((order) => order.id);
 
   // Get aggregated costs for all orders, grouped by order and cost type
   const costAggregations = await db
@@ -177,14 +184,14 @@ export async function getOrdersToExportWithCosts(params: Record<string, unknown>
 
   // Create a map for quick cost lookup
   const costMap = new Map<string, Record<string, string>>();
-  
+
   for (const cost of costAggregations) {
     if (!cost.orderId || !cost.costTypeName || !cost.totalAmount) continue;
-    
+
     if (!costMap.has(cost.orderId)) {
       costMap.set(cost.orderId, {});
     }
-    
+
     const orderCosts = costMap.get(cost.orderId);
     if (!orderCosts) {
       continue;
@@ -193,7 +200,7 @@ export async function getOrdersToExportWithCosts(params: Record<string, unknown>
   }
 
   // Combine order data with cost data
-  const ordersWithCosts: OrderExportData[] = orderRows.map(order => ({
+  const ordersWithCosts: OrderExportData[] = orderRows.map((order) => ({
     ...order,
     costs: costMap.get(order.id) || {},
   }));

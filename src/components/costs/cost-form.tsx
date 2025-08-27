@@ -102,7 +102,7 @@ export const CostForm = ({
         costTypeId: existingCost.costTypeId,
         amount: existingCost.amount,
         costDate: existingCost.costDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD
-        paymentDate: "",
+        paymentDate: existingCost.paymentDate ? existingCost.paymentDate.toISOString().split("T")[0] : "",
         description: existingCost.description || "",
       }
       : {

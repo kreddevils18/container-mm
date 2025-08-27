@@ -1,4 +1,4 @@
-import { and, asc, desc, gte, ilike, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, desc, gte, inArray, lte, sql } from "drizzle-orm";
 import { unstable_noStore as noStore } from "next/cache";
 import { z } from "zod";
 import { db } from "@/drizzle/client";
@@ -59,7 +59,17 @@ export async function getCustomers(
   const f = parsed.data;
 
   const where = and(
-    f.q ? ilike(customers.name, `%${f.q}%`) : undefined,
+    f.q
+      ? sql`(
+        -- Use existing customers FTS index for fast search
+        (
+          setweight(to_tsvector('simple', COALESCE(${customers.name}, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(${customers.email}, '')), 'B') ||
+          setweight(to_tsvector('simple', COALESCE(${customers.address}, '')), 'C') ||
+          setweight(to_tsvector('simple', COALESCE(${customers.taxId}, '')), 'D')
+        ) @@ plainto_tsquery('simple', ${f.q})
+      )`
+      : undefined,
     f.status?.length ? inArray(customers.status, f.status) : undefined,
     f.from ? gte(customers.createdAt, new Date(f.from)) : undefined,
     f.to ? lte(customers.createdAt, new Date(f.to)) : undefined

@@ -1,24 +1,8 @@
 import { eq } from "drizzle-orm";
 import { unstable_noStore as noStore } from "next/cache";
-import { db, costs } from "@/drizzle/schema";
+import { costs, db } from "@/drizzle/schema";
 import type { UpdateCostRequest } from "@/schemas/cost";
 
-/**
- * Updates an existing cost entry.
- * 
- * @param costId - The UUID of the cost to update
- * @param costData - The updated cost data
- * @returns Promise resolving to the updated cost
- * @throws Error if cost not found or update fails
- * 
- * @example
- * ```typescript
- * const updatedCost = await updateCost("123e4567-e89b-12d3-a456-426614174000", {
- *   amount: "175000.00",
- *   description: "Updated fuel cost"
- * });
- * ```
- */
 export async function updateCost(costId: string, costData: UpdateCostRequest) {
   noStore();
 
@@ -67,10 +51,9 @@ export async function updateCost(costId: string, costData: UpdateCostRequest) {
 
     return updatedCost;
   } catch (error) {
-    
     throw new Error(
-      error instanceof Error 
-        ? error.message 
+      error instanceof Error
+        ? error.message
         : "Đã xảy ra lỗi khi cập nhật chi phí"
     );
   }

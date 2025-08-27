@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { unstable_noStore as noStore } from "next/cache";
-import { and, ilike, inArray, gte, lte, desc, asc, sql } from "drizzle-orm";
+import { and, inArray, gte, lte, desc, asc, sql } from "drizzle-orm";
 import { db } from "@/drizzle/client";
 import { costTypes } from "@/drizzle/schema/costs";
 import { logger } from "@/lib/logger";
@@ -48,7 +48,15 @@ export async function getCostTypes(params: Record<string, unknown>) {
   const f = parsed.data;
 
   const where = and(
-    f.q ? ilike(costTypes.name, `%${f.q}%`) : undefined,
+    f.q
+      ? sql`(
+        -- Use new cost types FTS index for fast search
+        (
+          setweight(to_tsvector('simple', COALESCE(${costTypes.name}, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(${costTypes.description}, '')), 'B')
+        ) @@ plainto_tsquery('simple', ${f.q})
+      )`
+      : undefined,
     f.category?.length ? inArray(costTypes.category, f.category) : undefined,
     f.status?.length ? inArray(costTypes.status, f.status) : undefined,
     f.from ? gte(costTypes.createdAt, new Date(f.from)) : undefined,

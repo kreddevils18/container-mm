@@ -1,4 +1,4 @@
-import { and, asc, desc, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, gte, inArray, lte, sql } from "drizzle-orm";
 import { unstable_noStore as noStore } from "next/cache";
 import { z } from "zod";
 import { db } from "@/drizzle/client";
@@ -60,11 +60,14 @@ export async function getVehicles(params: Record<string, unknown>) {
 
   const where = and(
     f.q
-      ? or(
-        ilike(vehicles.driverName, `%${f.q}%`),
-        ilike(vehicles.licensePlate, `%${f.q}%`),
-        ilike(vehicles.driverPhone, `%${f.q}%`)
-      )
+      ? sql`(
+        -- Use new vehicles FTS index for fast search
+        (
+          setweight(to_tsvector('simple', COALESCE(${vehicles.licensePlate}, '')), 'A') ||
+          setweight(to_tsvector('simple', COALESCE(${vehicles.driverName}, '')), 'B') ||
+          setweight(to_tsvector('simple', COALESCE(${vehicles.driverPhone}, '')), 'C')
+        ) @@ plainto_tsquery('simple', ${f.q})
+      )`
       : undefined,
     f.status?.length ? inArray(vehicles.status, f.status) : undefined,
     f.from ? gte(vehicles.createdAt, new Date(f.from)) : undefined,

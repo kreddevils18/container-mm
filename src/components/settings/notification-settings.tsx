@@ -47,7 +47,7 @@ export const NotificationSettings = (): ReactElement => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast.success("Cài đặt thông báo đã được cập nhật thành công!");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Có lỗi xảy ra khi cập nhật cài đặt thông báo.");
     } finally {
       setIsSaving(false);

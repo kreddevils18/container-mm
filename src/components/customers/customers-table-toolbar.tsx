@@ -49,7 +49,6 @@ export const CustomersTableToolbar = ({
         const v = value?.trim() ?? "";
         if (v) u.set("q", v);
         else u.delete("q");
-        // reset trang khi thay đổi filter
         u.set("page", "1");
         replaceWithParams(u);
       });

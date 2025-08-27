@@ -23,6 +23,11 @@ export interface VehicleExportData {
   "Ngày cập nhật": string;
 }
 
+export interface VehicleWithCostsExportData extends VehicleExportData {
+  [costColumn: string]: string;
+  "Tổng chi phí": string;
+}
+
 export interface OrderExportData {
   "Mã container": string;
   "Khách hàng": string;

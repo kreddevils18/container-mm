@@ -1,35 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { db, costs } from "@/drizzle/schema";
+import { costs, db } from "@/drizzle/schema";
 import type { CreateCostRequest } from "@/schemas/cost";
 
-/**
- * Creates a new cost entry for an order or vehicle.
- * 
- * @param costData - The cost data to create (must include either orderId or vehicleId)
- * @returns Promise resolving to the created cost
- * @throws Error if creation fails
- * 
- * @example
- * ```typescript
- * // For order cost
- * const orderCost = await createCost({
- *   orderId: "123e4567-e89b-12d3-a456-426614174000",
- *   costTypeId: "456e7890-e89b-12d3-a456-426614174000",
- *   amount: "150000.50",
- *   costDate: "2024-01-15",
- *   description: "Fuel cost for delivery"
- * });
- * 
- * // For vehicle cost
- * const vehicleCost = await createCost({
- *   vehicleId: "123e4567-e89b-12d3-a456-426614174000",
- *   costTypeId: "456e7890-e89b-12d3-a456-426614174000",
- *   amount: "250000.00",
- *   costDate: "2024-01-15",
- *   description: "Vehicle maintenance"
- * });
- * ```
- */
 export async function createCost(costData: CreateCostRequest) {
   noStore();
 
@@ -66,11 +38,8 @@ export async function createCost(costData: CreateCostRequest) {
 
     return newCost;
   } catch (error) {
-    
     throw new Error(
-      error instanceof Error 
-        ? error.message 
-        : "Đã xảy ra lỗi khi tạo chi phí"
+      error instanceof Error ? error.message : "Đã xảy ra lỗi khi tạo chi phí"
     );
   }
 }

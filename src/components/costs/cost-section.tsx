@@ -15,6 +15,7 @@ import type { Cost, CostType } from "@/drizzle/schema";
 import { CostCreateDialog } from "./cost-create-dialog";
 import { CostEditDialog } from "./cost-edit-dialog";
 import { CostTable } from "./cost-table";
+import { VehicleDetailExportButton } from "../vehicles/vehicle-detail-export-button";
 
 interface CostSectionProps {
   title: string;
@@ -76,16 +77,22 @@ export function CostSection({
             Quản lý chi phí {entityType === "order" ? "đơn hàng" : "xe"}
           </CardDescription>
         </div>
-        {allowEditing && showCreateButton && (
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            size="sm"
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Thêm chi phí
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {entityType === "vehicle" && costs.length > 0 && (
+            <VehicleDetailExportButton vehicleId={entityId} />
+          )}
+          
+          {allowEditing && showCreateButton && (
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Thêm chi phí
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <CostTable

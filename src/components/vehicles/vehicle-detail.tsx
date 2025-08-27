@@ -23,7 +23,7 @@ export function VehicleDetail({ vehicle, costTypes }: VehicleDetailProps): React
       const response = await fetch(`/api/vehicles/${vehicle.id}/costs`);
       if (response.ok) {
         const result = await response.json();
-        setVehicleCosts(result.data.costs || []);
+        setVehicleCosts(result.data || []);
       }
     } catch {
       // Error handling is managed by the cost components

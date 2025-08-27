@@ -46,14 +46,14 @@ export const DataTableTextFilter = ({
     if ((value ?? "") !== localValue) {
       setLocalValue(value ?? "");
     }
-  }, [value, localValue]);
+  }, [value]);
 
   useEffect(() => {
     const next = debouncedValue.trim();
     if (next !== (value ?? "")) {
       onChange(next.length > 0 ? next : null);
     }
-  }, [debouncedValue, onChange, value]);
+  }, [debouncedValue]);
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>): void => {
