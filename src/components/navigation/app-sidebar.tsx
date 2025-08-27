@@ -65,7 +65,8 @@ const navigationItems = [
 
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
-  const user = useSession();
+  const { data } = useSession();
+  const user = data?.user;
 
   return (
     <Sidebar collapsible="icon">
@@ -132,13 +133,15 @@ export function AppSidebar(): ReactElement {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src="" alt={user.name} />
-                    <AvatarFallback className="rounded-lg">NAME</AvatarFallback>
+                    <AvatarImage src="" alt={user?.name || "User"} />
+                    <AvatarFallback className="rounded-lg">
+                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user.name}</span>
+                    <span className="truncate font-semibold">{user?.name || "Người dùng"}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {user.role}
+                      {user?.role || ""}
                     </span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
