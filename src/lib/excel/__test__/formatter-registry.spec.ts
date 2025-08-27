@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { FormatterRegistry, defaultFormatters } from "../core/formatter-registry.js";
+import { FormatterRegistry, defaultFormatters } from "../core/formatter-registry";
 
 describe("FormatterRegistry", () => {
   let registry: FormatterRegistry;

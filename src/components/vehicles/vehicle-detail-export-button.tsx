@@ -43,7 +43,7 @@ export function VehicleDetailExportButton({
       let filename = "chi-tiet-phuong-tien.xlsx";
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-        if (filenameMatch && filenameMatch[1]) {
+        if (filenameMatch?.[1]) {
           filename = filenameMatch[1].replace(/['"]/g, "");
         }
       }

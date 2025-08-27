@@ -4,13 +4,13 @@ import { setupTestContainer, setupDatabase, globalCleanup } from "../../setup/te
 import { DatabaseTestHelper } from "../../setup/database-helper";
 import { CustomerDataFactory } from "../../setup/test-data-factory";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import type { Customer } from "@/drizzle/schema";
-import { customers } from "@/drizzle/schema";
+import type { Customer } from "../../types";
+import { customers } from "@/drizzle/schema/customers";
 
 describe("Customer Search Integration Tests", () => {
   let container: StartedPostgreSqlContainer;
   let dbHelper: DatabaseTestHelper;
-  let testCustomers: Customer[];
+  let _testCustomers: Customer[];
 
   beforeAll(async () => {
     container = await setupTestContainer();
@@ -28,7 +28,7 @@ describe("Customer Search Integration Tests", () => {
     await dbHelper.clearAllData();
     
     const searchData = CustomerDataFactory.createSearchTestData();
-    testCustomers = await dbHelper.insertTestCustomers(searchData);
+    _testCustomers = await dbHelper.insertTestCustomers(searchData);
   });
 
   describe("Basic Search Functionality", () => {

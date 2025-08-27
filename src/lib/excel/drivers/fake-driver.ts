@@ -5,7 +5,7 @@ import type {
   WorkbookSpec, 
   ExcelMode,
   ExcelEvent 
-} from "../types.js";
+} from "../types";
 
 export class FakeDriver implements IExcelDriver {
   public readonly events: ExcelEvent[] = [];

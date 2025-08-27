@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createExcelService } from "../core/excel-service.js";
-import { StyleRegistry, defaultStyles } from "../core/style-registry.js";
-import { FormatterRegistry, defaultFormatters } from "../core/formatter-registry.js";
-import { FakeDriver } from "../drivers/fake-driver.js";
-import type { SheetData, WorkbookSpec, ExcelPlugin } from "../types.js";
+import { createExcelService } from "../core/excel-service";
+import { StyleRegistry, defaultStyles } from "../core/style-registry";
+import { FormatterRegistry, defaultFormatters } from "../core/formatter-registry";
+import { FakeDriver } from "../drivers/fake-driver";
+import type { SheetData, WorkbookSpec, ExcelPlugin } from "../types";
 
 describe("ExcelService", () => {
   let driver: FakeDriver;

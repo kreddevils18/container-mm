@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { and, gte, lte, ilike, inArray, asc, desc } from "drizzle-orm";
+import { and, gte, lte, ilike, inArray, asc, desc, type SQL } from "drizzle-orm";
 import { setupTestContainer, setupDatabase, globalCleanup } from "../../setup/testcontainer-setup";
 import { DatabaseTestHelper } from "../../setup/database-helper";
 import { CustomerDataFactory } from "../../setup/test-data-factory";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import type { Customer } from "@/drizzle/schema";
-import { customers } from "@/drizzle/schema";
+import type { Customer } from "../../types";
+import { customers } from "@/drizzle/schema/customers";
 
 interface ExportFilters {
   q?: string;
@@ -55,7 +55,7 @@ describe("Customer Export Integration Tests", () => {
     );
 
     const sortOrder = filters.sort || "createdAt.desc";
-    let orderBy;
+    let orderBy: SQL;
     
     switch (sortOrder) {
       case "createdAt.asc":

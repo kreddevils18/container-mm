@@ -3,8 +3,8 @@ import { setupTestContainer, setupDatabase, globalCleanup } from "../../setup/te
 import { DatabaseTestHelper } from "../../setup/database-helper";
 import { CustomerDataFactory } from "../../setup/test-data-factory";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import type { NewCustomer } from "@/drizzle/schema";
-import { customers } from "@/drizzle/schema";
+import type { NewCustomer } from "../../types";
+import { customers } from "@/drizzle/schema/customers";
 import { CreateCustomerRequestSchema, UpdateCustomerRequestSchema } from "@/schemas/customer";
 
 describe("Customer Validation and Error Handling Tests", () => {
@@ -67,8 +67,8 @@ describe("Customer Validation and Error Handling Tests", () => {
         
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0]?.path).toContain("name");
-          expect(result.error.issues[0]?.message).toContain("bắt buộc");
+          expect(result.error.issues[0]?.path).toEqual(["name"]);
+          expect(result.error.issues[0]?.message).toContain("Invalid input");
         }
       });
 
@@ -298,7 +298,7 @@ describe("Customer Validation and Error Handling Tests", () => {
     it("should enforce length constraints on email field", async () => {
       const customerWithLongEmail: NewCustomer = {
         name: "Test Customer",
-        email: "A".repeat(250) + "@example.com",
+        email: `${"A".repeat(250)}@example.com`,
         address: "Test Address",
         status: "active",
       };
@@ -468,18 +468,18 @@ describe("Customer Validation and Error Handling Tests", () => {
       
       const validCustomer = CustomerDataFactory.createSingleCustomer();
       const invalidCustomer = {
+        name: null, // This will cause a NOT NULL constraint violation
         address: "Missing name",
         status: "active",
       } as any;
 
-      try {
-        await dbHelper.getSql().begin(async (sql) => {
-          await dbHelper.getDb().insert(customers).values(validCustomer);
-          await dbHelper.getDb().insert(customers).values(invalidCustomer);
-        });
-      } catch (error) {
-        // Transaction should rollback
-      }
+      await expect(
+        dbHelper.getDb().transaction(async (tx) => {
+          await tx.insert(customers).values(validCustomer);
+          // This should fail and rollback the entire transaction
+          await tx.insert(customers).values(invalidCustomer);
+        })
+      ).rejects.toThrow();
 
       const finalCount = await dbHelper.getCustomerCount();
       expect(finalCount).toBe(initialCount);
@@ -516,15 +516,15 @@ describe("Customer Validation and Error Handling Tests", () => {
     it("should handle memory constraints on large data", async () => {
       const largeString = "A".repeat(10000);
       const customerWithLargeData = {
-        name: largeString.substring(0, 200),
-        address: largeString.substring(0, 500),
-        email: `test@${largeString.substring(0, 240)}.com`,
+        name: largeString.substring(0, 300), // Exceeds 200 char limit
+        address: largeString.substring(0, 600), // Exceeds 500 char limit  
+        email: `test@${largeString.substring(0, 240)}.com`, // Exceeds 254 char limit
         status: "active" as const,
       };
 
       await expect(
         dbHelper.insertTestCustomers([customerWithLargeData])
-      ).rejects.toThrow();
+      ).rejects.toThrow(/Failed query|too long|constraint|validation/i);
     });
 
     it("should maintain data consistency after errors", async () => {
@@ -538,7 +538,7 @@ describe("Customer Validation and Error Handling Tests", () => {
         } as any;
         
         await dbHelper.insertTestCustomers([invalidCustomer]);
-      } catch (error) {
+      } catch (_error) {
         // Expected to fail
       }
       

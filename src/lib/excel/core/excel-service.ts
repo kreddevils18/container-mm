@@ -7,7 +7,7 @@ import type {
   ColumnDef,
   CellValue,
   ExcelPlugin
-} from "../types.js";
+} from "../types";
 
 export class ExcelService implements IExcelService {
   constructor(private deps: ExcelServiceDependencies) {}

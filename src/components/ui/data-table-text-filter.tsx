@@ -160,3 +160,20 @@ export const createTextFilterConfig = (
   icon: Search,
   ...options,
 });
+
+/**
+ * Pre-configured filter configurations for different languages
+ */
+export const DATA_TABLE_TEXT_FILTER_DEFAULTS = {
+  VIETNAMESE: createTextFilterConfig("Tìm kiếm..."),
+  ENGLISH: createTextFilterConfig("Search..."),
+} as const;
+
+/**
+ * Get text filter configuration based on locale
+ */
+export const getTextFilterConfig = (locale: string = "vi"): DataTableTextFilterConfig => {
+  return locale.startsWith("vi") 
+    ? DATA_TABLE_TEXT_FILTER_DEFAULTS.VIETNAMESE
+    : DATA_TABLE_TEXT_FILTER_DEFAULTS.ENGLISH;
+};

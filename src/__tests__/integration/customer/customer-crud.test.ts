@@ -4,8 +4,8 @@ import { setupTestContainer, setupDatabase, globalCleanup } from "../../setup/te
 import { DatabaseTestHelper } from "../../setup/database-helper";
 import { CustomerDataFactory } from "../../setup/test-data-factory";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import type { Customer, NewCustomer } from "@/drizzle/schema";
-import { customers } from "@/drizzle/schema";
+import type { Customer, NewCustomer } from "../../types";
+import { customers } from "@/drizzle/schema/customers";
 
 describe("Customer CRUD Integration Tests", () => {
   let container: StartedPostgreSqlContainer;

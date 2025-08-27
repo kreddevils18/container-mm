@@ -5,7 +5,7 @@
  * Provides type-safe value transformation with null-safe operations.
  */
 
-import type { Formatter, FormatterRegistry as IFormatterRegistry } from "../types.js";
+import type { Formatter, FormatterRegistry as IFormatterRegistry } from "../types";
 import { logger } from "@/lib/logger";
 
 /**

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ExcelJSDriver } from "../drivers/exceljs-driver.js";
+import { ExcelJSDriver } from "../drivers/exceljs-driver";
 import Excel from "exceljs";
 
 describe("ExcelJSDriver Memory Mode", () => {

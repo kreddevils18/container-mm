@@ -1,11 +1,10 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
-import * as schema from "@/drizzle/schema";
 
 let globalContainer: StartedPostgreSqlContainer | null = null;
-let globalDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
+let globalDb: ReturnType<typeof drizzle> | null = null;
 let globalSql: ReturnType<typeof postgres> | null = null;
 
 const TEST_DB_CONFIG = {
@@ -44,7 +43,7 @@ export async function setupTestContainer(): Promise<StartedPostgreSqlContainer> 
 }
 
 export async function setupDatabase(container: StartedPostgreSqlContainer): Promise<{
-  db: ReturnType<typeof drizzle<typeof schema>>;
+  db: ReturnType<typeof drizzle>;
   sql: ReturnType<typeof postgres>;
 }> {
   if (globalDb && globalSql) {
@@ -61,13 +60,33 @@ export async function setupDatabase(container: StartedPostgreSqlContainer): Prom
     connect_timeout: 10,
   });
 
-  const db = drizzle(sql, { schema });
+  const db = drizzle(sql);
 
   console.log("🔄 Running database migrations...");
   await migrate(db, { migrationsFolder: "./drizzle" });
 
   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
   await sql`CREATE EXTENSION IF NOT EXISTS "pg_trgm"`;
+
+  // Create GIN indexes for full-text search after migrations
+  console.log("🔍 Creating search indexes...");
+  await sql`
+    CREATE INDEX IF NOT EXISTS vehicles_search_idx ON vehicles 
+    USING GIN ((
+      setweight(to_tsvector('simple', COALESCE(license_plate, '')), 'A') ||
+      setweight(to_tsvector('simple', COALESCE(driver_name, '')), 'B') ||
+      setweight(to_tsvector('simple', COALESCE(driver_phone, '')), 'C')
+    ))
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS customers_search_idx ON customers 
+    USING GIN ((
+      setweight(to_tsvector('simple', COALESCE(name, '')), 'A') ||
+      setweight(to_tsvector('simple', COALESCE(email, '')), 'B') ||
+      setweight(to_tsvector('simple', COALESCE(address, '')), 'C')
+    ))
+  `;
 
   globalDb = db;
   globalSql = sql;
@@ -77,7 +96,7 @@ export async function setupDatabase(container: StartedPostgreSqlContainer): Prom
   return { db, sql };
 }
 
-export async function cleanupTest(sql: ReturnType<typeof postgres>): Promise<void> {
+export async function cleanupTest(_sql: ReturnType<typeof postgres>): Promise<void> {
 }
 
 export async function globalCleanup(): Promise<void> {
@@ -101,7 +120,7 @@ export async function globalCleanup(): Promise<void> {
 
 export function getTestConfig(): {
   container: StartedPostgreSqlContainer | null;
-  db: ReturnType<typeof drizzle<typeof schema>> | null;
+  db: ReturnType<typeof drizzle> | null;
   sql: ReturnType<typeof postgres> | null;
 } {
   return {

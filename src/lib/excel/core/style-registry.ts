@@ -1,4 +1,4 @@
-import type { StyleRegistry as IStyleRegistry } from "../types.js";
+import type { StyleRegistry as IStyleRegistry } from "../types";
 import { logger } from "@/lib/logger";
 
 export class StyleRegistry implements IStyleRegistry {

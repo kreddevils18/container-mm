@@ -69,7 +69,7 @@ export const CostTypeForm = ({
   const statusId = useId();
 
   const form = useForm<CreateCostTypeRequest>({
-    resolver: zodResolver(CreateCostTypeRequestSchema) as any,
+    resolver: zodResolver(CreateCostTypeRequestSchema),
     defaultValues,
     mode: "onBlur" as const,
   });

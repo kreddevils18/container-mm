@@ -5,7 +5,7 @@ import type {
   ISheetWriter, 
   WorkbookSpec, 
   ExcelMode 
-} from "../types.js";
+} from "../types";
 import type { Readable } from "node:stream";
 
 export class ExcelJSDriver implements IExcelDriver {

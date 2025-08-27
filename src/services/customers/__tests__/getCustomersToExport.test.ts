@@ -131,10 +131,11 @@ describe("getCustomersToExport", () => {
    * Test that invalid filters throw an error
    */
   it("should throw error for invalid filters", async () => {
-    // Mock the validation to fail
-    const invalidParams = { page: "invalid" };
+    // Use truly invalid data that will cause Zod parsing to fail
+    // The schema expects arrays for status, but we'll pass an object
+    const invalidParams = { status: { invalid: "object" } as any };
     
-    await expect(getCustomersToExport(invalidParams)).rejects.toThrow("Invalid filters");
+    await expect(getCustomersToExport(invalidParams)).rejects.toThrow("Invalid customer export filters");
   });
 
   /**

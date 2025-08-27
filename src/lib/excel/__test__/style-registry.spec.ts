@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { StyleRegistry, defaultStyles } from "../core/style-registry.js";
+import { StyleRegistry, defaultStyles } from "../core/style-registry";
 
 describe("StyleRegistry", () => {
   let registry: StyleRegistry;

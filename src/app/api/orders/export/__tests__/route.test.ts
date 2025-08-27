@@ -20,9 +20,16 @@ vi.mock("@/lib/excel", () => ({
   })),
   defaultFormatters: vi.fn(),
   defaultStyles: vi.fn(),
-  ExcelJSDriver: vi.fn(),
-  FormatterRegistry: vi.fn(),
-  StyleRegistry: vi.fn(),
+  ExcelJSDriver: vi.fn().mockImplementation(() => ({})),
+  FormatterRegistry: class {
+    register = vi.fn();
+    apply = vi.fn((_, value) => value);
+  },
+  StyleRegistry: class {
+    register = vi.fn();
+    resolve = vi.fn((style) => style);
+    getRegisteredStyles = vi.fn(() => []);
+  },
 }));
 
 import {
@@ -234,7 +241,7 @@ describe("Order Export API with Costs", () => {
     expect(response.status).toBe(200);
     expect(mockGetOrderCostTypes).toHaveBeenCalledOnce();
     expect(mockGetOrdersToExportWithCosts).toHaveBeenCalledWith({});
-    
+
     // The profit should be calculated correctly in the exportData
     // but since we're mocking the excel generation, we can't directly test the calculated value
     // The important thing is that the service calls succeed with the profit logic
@@ -322,7 +329,7 @@ describe("Order Export API with Costs", () => {
     expect(response.headers.get("Content-Type")).toBe(
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
-    
+
     // Test passes if the API runs successfully with styling
     // The style application itself is handled by the Excel library
   });

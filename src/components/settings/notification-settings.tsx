@@ -2,7 +2,7 @@
 
 import { Bell, Mail, Settings, AlertCircle, Megaphone } from "lucide-react";
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useState, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,13 @@ export const NotificationSettings = (): ReactElement => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+
+  // Generate unique IDs for each switch
+  const emailNotificationsId = useId();
+  const orderUpdatesId = useId();
+  const systemNotificationsId = useId();
+  const maintenanceAlertsId = useId();
+  const marketingEmailsId = useId();
 
   const handleToggle = (key: keyof typeof notifications): void => {
     setNotifications(prev => ({
@@ -82,13 +89,13 @@ export const NotificationSettings = (): ReactElement => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="email-notifications">Bật thông báo email</Label>
+                <Label htmlFor={emailNotificationsId}>Bật thông báo email</Label>
                 <p className="text-sm text-gray-500">
                   Nhận tất cả thông báo qua email
                 </p>
               </div>
               <Switch
-                id="email-notifications"
+                id={emailNotificationsId}
                 checked={notifications.emailNotifications}
                 onCheckedChange={() => handleToggle('emailNotifications')}
               />
@@ -109,13 +116,13 @@ export const NotificationSettings = (): ReactElement => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="order-updates">Cập nhật đơn hàng</Label>
+                <Label htmlFor={orderUpdatesId}>Cập nhật đơn hàng</Label>
                 <p className="text-sm text-gray-500">
                   Thông báo khi có cập nhật về đơn hàng
                 </p>
               </div>
               <Switch
-                id="order-updates"
+                id={orderUpdatesId}
                 checked={notifications.orderUpdates}
                 onCheckedChange={() => handleToggle('orderUpdates')}
               />
@@ -136,13 +143,13 @@ export const NotificationSettings = (): ReactElement => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="system-notifications">Thông báo hệ thống</Label>
+                <Label htmlFor={systemNotificationsId}>Thông báo hệ thống</Label>
                 <p className="text-sm text-gray-500">
                   Cảnh báo bảo mật và cập nhật hệ thống
                 </p>
               </div>
               <Switch
-                id="system-notifications"
+                id={systemNotificationsId}
                 checked={notifications.systemNotifications}
                 onCheckedChange={() => handleToggle('systemNotifications')}
               />
@@ -152,13 +159,13 @@ export const NotificationSettings = (): ReactElement => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="maintenance-alerts">Cảnh báo bảo trì</Label>
+                <Label htmlFor={maintenanceAlertsId}>Cảnh báo bảo trì</Label>
                 <p className="text-sm text-gray-500">
                   Thông báo về lịch bảo trì hệ thống
                 </p>
               </div>
               <Switch
-                id="maintenance-alerts"
+                id={maintenanceAlertsId}
                 checked={notifications.maintenanceAlerts}
                 onCheckedChange={() => handleToggle('maintenanceAlerts')}
               />
@@ -179,13 +186,13 @@ export const NotificationSettings = (): ReactElement => {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="marketing-emails">Email tiếp thị</Label>
+                <Label htmlFor={marketingEmailsId}>Email tiếp thị</Label>
                 <p className="text-sm text-gray-500">
                   Nhận thông tin về tính năng mới và ưu đãi
                 </p>
               </div>
               <Switch
-                id="marketing-emails"
+                id={marketingEmailsId}
                 checked={notifications.marketingEmails}
                 onCheckedChange={() => handleToggle('marketingEmails')}
               />
