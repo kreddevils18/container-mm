@@ -159,7 +159,7 @@ export const OrdersTableToolbar = ({
         )}
         <div></div>
         <div>
-          <DataTableViewOptions table={table} />
+          <DataTableViewOptions table={table} context="order" />
         </div>
       </div>
     </div>

@@ -15,32 +15,49 @@ import {
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
+  context?: "customer" | "vehicle" | "cost-type" | "order";
 }
 
-const getColumnDisplayName = (columnId: string): string => {
+const getColumnDisplayName = (columnId: string, context?: string): string => {
   const displayNames: Record<string, string> = {
-    full_name: "Họ và tên",
+    // Customer columns
+    name: context === "cost-type" ? "Tên loại chi phí" : "Tên khách hàng",
+    taxId: "Mã số thuế", 
     email: "Email",
-    role: "Vai trò",
-    status: "Trạng thái",
-    created_at: "Ngày tạo",
-    updated_at: "Ngày cập nhật",
-    license_plate: "Biển số",
-    price: "Giá tiền",
-    id: "Mã ID",
-    description: "Mô tả",
-    start_point: "Điểm bắt đầu",
-    end_point: "Điểm kết thúc",
-    distance: "Khoảng cách",
     phone: "Số điện thoại",
     address: "Địa chỉ",
+    status: "Trạng thái",
+    createdAt: "Ngày tạo",
+    updatedAt: "Ngày cập nhật",
+    
+    // Vehicle columns
+    licensePlate: "Biển số xe",
+    driverName: "Tên tài xế",
+    driverPhone: "Số điện thoại",
+    
+    // Cost Type columns
+    category: "Danh mục",
+    description: "Mô tả",
+    
+    // Order columns
     containerCode: "Mã container",
     customerName: "Khách hàng",
     emptyPickupVehiclePlate: "Xe lấy rỗng",
     deliveryVehiclePlate: "Xe hạ hàng",
     emptyPickupDate: "Ngày lấy rỗng",
     deliveryDate: "Ngày hạ hàng",
-    createdAt: "Ngày tạo",
+    price: "Giá tiền",
+    
+    // Legacy/other columns
+    full_name: "Họ và tên",
+    role: "Vai trò",
+    created_at: "Ngày tạo",
+    updated_at: "Ngày cập nhật",
+    license_plate: "Biển số",
+    id: "Mã ID",
+    start_point: "Điểm bắt đầu",
+    end_point: "Điểm kết thúc",
+    distance: "Khoảng cách",
   };
 
   return displayNames[columnId] || columnId;
@@ -48,6 +65,7 @@ const getColumnDisplayName = (columnId: string): string => {
 
 export function DataTableViewOptions<TData>({
   table,
+  context,
 }: DataTableViewOptionsProps<TData>) {
   return (
     <DropdownMenu>
@@ -78,7 +96,7 @@ export function DataTableViewOptions<TData>({
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {getColumnDisplayName(column.id)}
+                {getColumnDisplayName(column.id, context)}
               </DropdownMenuCheckboxItem>
             );
           })}

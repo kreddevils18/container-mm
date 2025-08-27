@@ -72,7 +72,7 @@ export const VehiclesTableToolbar = ({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      <DataTableViewOptions table={table} context="vehicle" />
     </div>
   );
 };

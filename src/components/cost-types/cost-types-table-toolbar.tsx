@@ -99,7 +99,7 @@ export const CostTypesTableToolbar = ({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      <DataTableViewOptions table={table} context="cost-type" />
     </div>
   );
 };

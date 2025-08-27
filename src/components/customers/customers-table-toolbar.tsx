@@ -96,7 +96,7 @@ export const CustomersTableToolbar = ({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      <DataTableViewOptions table={table} context="customer" />
     </div>
   );
 };
