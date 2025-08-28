@@ -47,7 +47,6 @@ export interface OrderExportData {
   emptyPickupStart: string | null;
   emptyPickupEnd: string | null;
   deliveryDate: Date | null;
-  deliveryStart: string | null;
   deliveryEnd: string | null;
   status: string;
   price: string;
@@ -135,7 +134,6 @@ export async function getOrdersToExportWithCosts(
       emptyPickupStart: orders.emptyPickupStart,
       emptyPickupEnd: orders.emptyPickupEnd,
       deliveryDate: orders.deliveryDate,
-      deliveryStart: orders.deliveryStart,
       deliveryEnd: orders.deliveryEnd,
       status: orders.status,
       price: orders.price,

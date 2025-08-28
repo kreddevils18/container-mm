@@ -2,6 +2,7 @@
 
 import { Check, ChevronsUpDown } from "lucide-react";
 import * as React from "react";
+import type { VehicleSearchResult } from "@/app/api/vehicles/search/route";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -16,49 +17,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
+import { getVehicleById } from "@/services/vehicles/getVehicleById";
 import { searchVehicles } from "@/services/vehicles/searchVehicles";
-import type { VehicleSearchResult } from "@/app/api/vehicles/search/route";
 
 export interface VehicleComboboxProps {
-  /** Current selected vehicle ID */
   value?: string;
-  /** Callback when vehicle changes */
   onValueChange: (value: string) => void;
-  /** Placeholder text when no vehicle selected */
   placeholder?: string;
-  /** Whether the combobox is disabled */
   disabled?: boolean;
-  /** Class name for styling */
   className?: string;
-  /** Width of the combobox */
   width?: string;
-  /** Maximum number of results to show */
   limit?: number;
 }
 
-/**
- * Vehicle search combobox with high-performance Vietnamese text search
- *
- * Features:
- * - PostgreSQL Full-Text Search with Vietnamese support
- * - Debounced search (300ms) with request cancellation
- * - Multi-field display (licensePlate, driverName, driverPhone)
- * - Vietnamese UI localization
- * - Sub-150ms response time target
- * - React Hook Form compatible
- *
- * @component
- * @example
- * ```tsx
- * <VehicleCombobox
- *   value={selectedVehicleId}
- *   onValueChange={setSelectedVehicleId}
- *   placeholder="Chọn phương tiện..."
- * />
- * ```
- */
 export const VehicleCombobox = React.forwardRef<
   React.ComponentRef<typeof Button>,
   VehicleComboboxProps
@@ -78,14 +51,15 @@ export const VehicleCombobox = React.forwardRef<
     const [open, setOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [isSearching, setIsSearching] = React.useState(false);
-    const [searchResults, setSearchResults] = React.useState<VehicleSearchResult[]>([]);
-    const [selectedVehicle, setSelectedVehicle] = React.useState<VehicleSearchResult | null>(null);
+    const [searchResults, setSearchResults] = React.useState<
+      VehicleSearchResult[]
+    >([]);
+    const [selectedVehicle, setSelectedVehicle] =
+      React.useState<VehicleSearchResult | null>(null);
     const [error, setError] = React.useState<string | null>(null);
 
-    // Debounce search query to avoid excessive API calls
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    // AbortController ref for canceling requests
     const abortControllerRef = React.useRef<AbortController | null>(null);
 
     const loadRecentVehicles = React.useCallback(async (): Promise<void> => {
@@ -93,12 +67,10 @@ export const VehicleCombobox = React.forwardRef<
         setIsSearching(true);
         setError(null);
 
-        // Cancel previous request
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
         }
 
-        // Create new AbortController
         abortControllerRef.current = new AbortController();
 
         const response = await searchVehicles("", {
@@ -116,33 +88,36 @@ export const VehicleCombobox = React.forwardRef<
       }
     }, [limit]);
 
-    const performSearch = React.useCallback(async (query: string): Promise<void> => {
-      try {
-        setIsSearching(true);
-        setError(null);
+    const performSearch = React.useCallback(
+      async (query: string): Promise<void> => {
+        try {
+          setIsSearching(true);
+          setError(null);
 
-        // Cancel previous request
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
+          // Cancel previous request
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+
+          // Create new AbortController
+          abortControllerRef.current = new AbortController();
+
+          const response = await searchVehicles(query, {
+            limit,
+            signal: abortControllerRef.current.signal,
+          });
+
+          setSearchResults(response.results);
+        } catch (error) {
+          if (error instanceof Error && error.name !== "AbortError") {
+            setError("Lỗi tìm kiếm phương tiện");
+          }
+        } finally {
+          setIsSearching(false);
         }
-
-        // Create new AbortController
-        abortControllerRef.current = new AbortController();
-
-        const response = await searchVehicles(query, {
-          limit,
-          signal: abortControllerRef.current.signal,
-        });
-
-        setSearchResults(response.results);
-      } catch (error) {
-        if (error instanceof Error && error.name !== "AbortError") {
-          setError("Lỗi tìm kiếm phương tiện");
-        }
-      } finally {
-        setIsSearching(false);
-      }
-    }, [limit]);
+      },
+      [limit]
+    );
 
     // Load initial recent vehicles when opening
     React.useEffect(() => {
@@ -160,26 +135,48 @@ export const VehicleCombobox = React.forwardRef<
       }
     }, [debouncedSearchQuery, open, performSearch, loadRecentVehicles]);
 
+    // Load vehicle details khi có value nhưng chưa có selectedVehicle
+    const loadVehicleById = React.useCallback(
+      async (vehicleId: string): Promise<void> => {
+        try {
+          const found = searchResults.find(
+            (vehicle) => vehicle.id === vehicleId
+          );
+          if (found) {
+            setSelectedVehicle(found);
+            return;
+          }
+
+          setIsSearching(true);
+          setError(null);
+
+          const vehicle = await getVehicleById(vehicleId);
+          if (vehicle) {
+            setSelectedVehicle(vehicle);
+          } else {
+            setSelectedVehicle(null);
+          }
+        } catch (_error) {
+          setSelectedVehicle(null);
+        } finally {
+          setIsSearching(false);
+        }
+      },
+      [searchResults]
+    );
+
     // Find selected vehicle when value changes
     React.useEffect(() => {
       if (value && value !== selectedVehicle?.id) {
-        // Try to find in current results first
-        const found = searchResults.find(vehicle => vehicle.id === value);
-        if (found) {
-          setSelectedVehicle(found);
-        } else if (value) {
-          // If not found, could fetch single vehicle by ID
-          // For now, keep existing selected vehicle or clear
-          setSelectedVehicle(null);
-        }
+        void loadVehicleById(value);
       } else if (!value) {
         setSelectedVehicle(null);
       }
-    }, [value, searchResults, selectedVehicle?.id]);
+    }, [value, selectedVehicle?.id, loadVehicleById]);
 
     const handleSelect = (vehicleId: string): void => {
       const vehicle = searchResults.find((v) => v.id === vehicleId);
-      
+
       if (vehicleId === value) {
         // Deselect if clicking the same vehicle
         onValueChange("");
@@ -188,7 +185,7 @@ export const VehicleCombobox = React.forwardRef<
         onValueChange(vehicleId);
         setSelectedVehicle(vehicle || null);
       }
-      
+
       setOpen(false);
     };
 
@@ -237,10 +234,9 @@ export const VehicleCombobox = React.forwardRef<
             style={{ width }}
           >
             <span className="truncate">
-              {selectedVehicle 
+              {selectedVehicle
                 ? formatVehicleDisplay(selectedVehicle)
-                : placeholder
-              }
+                : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>

@@ -21,7 +21,6 @@ export type UpdateOrderActionState = {
     emptyPickupEnd?: string[];
     deliveryVehicleId?: string[];
     deliveryDate?: string[];
-    deliveryStart?: string[];
     deliveryEnd?: string[];
     description?: string[];
     status?: string[];
@@ -65,7 +64,6 @@ export async function updateOrderAction(
     emptyPickupEnd: formData.get("emptyPickupEnd"),
     deliveryVehicleId: formData.get("deliveryVehicleId"),
     deliveryDate: formData.get("deliveryDate"),
-    deliveryStart: formData.get("deliveryStart"),
     deliveryEnd: formData.get("deliveryEnd"),
     description: formData.get("description"),
     status: formData.get("status"),
@@ -113,7 +111,6 @@ export async function updateOrderAction(
           emptyPickupEnd: validatedFields.data.emptyPickupEnd,
           deliveryVehicleId: validatedFields.data.deliveryVehicleId,
           deliveryDate: validatedFields.data.deliveryDate,
-          deliveryStart: validatedFields.data.deliveryStart,
           deliveryEnd: validatedFields.data.deliveryEnd,
           description: validatedFields.data.description,
           status: validatedFields.data.status,

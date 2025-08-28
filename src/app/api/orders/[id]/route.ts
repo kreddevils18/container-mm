@@ -115,7 +115,6 @@ export async function PUT(
       emptyPickupEnd,
       deliveryVehicleId,
       deliveryDate,
-      deliveryStart,
       deliveryEnd,
       description,
       status,
@@ -168,8 +167,6 @@ export async function PUT(
       updateData.deliveryVehicleId = deliveryVehicleId || null;
     if (deliveryDate !== undefined)
       updateData.deliveryDate = deliveryDate ? new Date(deliveryDate) : null;
-    if (deliveryStart !== undefined)
-      updateData.deliveryStart = deliveryStart || null;
     if (deliveryEnd !== undefined) updateData.deliveryEnd = deliveryEnd || null;
     if (description !== undefined) updateData.description = description || null;
     if (status !== undefined) updateData.status = status;
@@ -199,7 +196,6 @@ export async function PUT(
           emptyPickupEnd: orders.emptyPickupEnd,
           deliveryVehicleId: orders.deliveryVehicleId,
           deliveryDate: orders.deliveryDate,
-          deliveryStart: orders.deliveryStart,
           deliveryEnd: orders.deliveryEnd,
           description: orders.description,
           status: orders.status,

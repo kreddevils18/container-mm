@@ -6,10 +6,65 @@ import { UpdateCustomerRequestSchema } from "@/schemas";
 
 const CustomerIdSchema = z.string().uuid();
 
+// Response schema matching CustomerSearchResult
+const CustomerResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().nullable(),
+  address: z.string(),
+  phone: z.string().nullable(),
+});
+
 interface RouteParams {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function GET(
+  _request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
+  try {
+    const { id } = await params;
+
+    // Validate customer ID
+    const idValidation = CustomerIdSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json(
+        { error: "ID khách hàng không hợp lệ" },
+        { status: 400 }
+      );
+    }
+
+    // Get customer
+    const [customer] = await db
+      .select({
+        id: customers.id,
+        name: customers.name,
+        email: customers.email,
+        address: customers.address,
+        phone: customers.phone,
+      })
+      .from(customers)
+      .where(eq(customers.id, id))
+      .limit(1);
+
+    if (!customer) {
+      return NextResponse.json(
+        { error: "Không tìm thấy khách hàng" },
+        { status: 404 }
+      );
+    }
+
+    const validatedCustomer = CustomerResponseSchema.parse(customer);
+    return NextResponse.json(validatedCustomer);
+  } catch (_error) {
+    return NextResponse.json(
+      { error: "Lỗi hệ thống khi lấy thông tin khách hàng" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(

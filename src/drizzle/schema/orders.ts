@@ -35,7 +35,6 @@ export const orders = pgTable(
       () => vehicles.id
     ),
     deliveryDate: timestamp("delivery_date", { withTimezone: true }),
-    deliveryStart: varchar("delivery_start", { length: 200 }),
     deliveryEnd: varchar("delivery_end", { length: 200 }),
     description: text("description"),
     status: orderStatusEnum("status").default("created").notNull(),

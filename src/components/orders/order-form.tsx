@@ -45,7 +45,6 @@ const _DEFAULT_ORDER_FORM_DATA: CreateOrderRequest = {
   emptyPickupEnd: "",
   deliveryVehicleId: "",
   deliveryDate: "",
-  deliveryStart: "",
   deliveryEnd: "",
   description: "",
   status: "created",
@@ -93,7 +92,6 @@ export const OrderForm = ({
   const priceId = useId();
   const emptyPickupStartId = useId();
   const emptyPickupEndId = useId();
-  const deliveryStartId = useId();
   const deliveryEndId = useId();
   const descriptionId = useId();
   const statusId = useId();
@@ -556,61 +554,31 @@ export const OrderForm = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="deliveryStart"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor={deliveryStartId}>
-                    Điểm đầu hạ hàng
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id={deliveryStartId}
-                      name="deliveryStart"
-                      placeholder="Nhập điểm đầu"
-                      disabled={isLoading}
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  {serverFieldErrors?.deliveryStart && (
-                    <div className="text-sm text-destructive">
-                      {serverFieldErrors.deliveryStart.join(", ")}
-                    </div>
-                  )}
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="deliveryEnd"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor={deliveryEndId}>Điểm cuối hạ hàng</FormLabel>
-                  <FormControl>
-                    <Input
-                      id={deliveryEndId}
-                      name="deliveryEnd"
-                      placeholder="Nhập điểm cuối"
-                      disabled={isLoading}
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  {serverFieldErrors?.deliveryEnd && (
-                    <div className="text-sm text-destructive">
-                      {serverFieldErrors.deliveryEnd.join(", ")}
-                    </div>
-                  )}
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="deliveryEnd"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor={deliveryEndId}>Điểm hạ hàng</FormLabel>
+                <FormControl>
+                  <Input
+                    id={deliveryEndId}
+                    name="deliveryEnd"
+                    placeholder="Nhập điểm hạ hàng"
+                    disabled={isLoading}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+                {serverFieldErrors?.deliveryEnd && (
+                  <div className="text-sm text-destructive">
+                    {serverFieldErrors.deliveryEnd.join(", ")}
+                  </div>
+                )}
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Description and Status */}

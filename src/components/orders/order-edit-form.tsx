@@ -29,6 +29,9 @@ export function OrderEditForm({
   const defaultValues: CreateOrderRequest = {
     customerId: order.customerId,
     containerCode: order.containerCode || "",
+    shippingLine: order.shippingLine || "",
+    bookingNumber: order.bookingNumber || "",
+    oilQuantity: order.oilQuantity || "",
     emptyPickupVehicleId: order.emptyPickupVehicleId || "",
     emptyPickupDate: order.emptyPickupDate
       ? order.emptyPickupDate.toISOString()
@@ -39,11 +42,11 @@ export function OrderEditForm({
     deliveryDate: order.deliveryDate
       ? order.deliveryDate.toISOString()
       : "",
-    deliveryStart: order.deliveryStart || "",
     deliveryEnd: order.deliveryEnd || "",
     description: order.description || "",
     status: order.status,
     price: order.price,
+    containers: "containers" in order ? (order as any).containers || [] : [],
   };
 
   return (

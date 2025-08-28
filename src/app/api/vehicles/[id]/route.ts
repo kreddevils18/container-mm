@@ -6,10 +6,63 @@ import { UpdateVehicleRequestSchema } from "@/schemas";
 
 const VehicleIdSchema = z.string().uuid();
 
+// Response schema matching VehicleSearchResult
+const VehicleResponseSchema = z.object({
+  id: z.string(),
+  licensePlate: z.string(),
+  driverName: z.string(),
+  driverPhone: z.string(),
+});
+
 interface RouteParams {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function GET(
+  _request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
+  try {
+    const { id } = await params;
+
+    // Validate vehicle ID
+    const idValidation = VehicleIdSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json(
+        { error: "ID phương tiện không hợp lệ" },
+        { status: 400 }
+      );
+    }
+
+    // Get vehicle
+    const [vehicle] = await db
+      .select({
+        id: vehicles.id,
+        licensePlate: vehicles.licensePlate,
+        driverName: vehicles.driverName,
+        driverPhone: vehicles.driverPhone,
+      })
+      .from(vehicles)
+      .where(eq(vehicles.id, id))
+      .limit(1);
+
+    if (!vehicle) {
+      return NextResponse.json(
+        { error: "Không tìm thấy phương tiện" },
+        { status: 404 }
+      );
+    }
+
+    const validatedVehicle = VehicleResponseSchema.parse(vehicle);
+    return NextResponse.json(validatedVehicle);
+  } catch (_error) {
+    return NextResponse.json(
+      { error: "Lỗi hệ thống khi lấy thông tin phương tiện" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(

@@ -14,7 +14,6 @@ const DEFAULT_ORDER_CREATE_DATA: CreateOrderRequest = {
   emptyPickupEnd: "",
   deliveryVehicleId: "",
   deliveryDate: "",
-  deliveryStart: "",
   deliveryEnd: "",
   description: "",
   status: "created",

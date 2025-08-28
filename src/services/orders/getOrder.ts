@@ -37,7 +37,6 @@ export async function getOrder(id: string) {
       emptyPickupStart: orders.emptyPickupStart,
       emptyPickupEnd: orders.emptyPickupEnd,
       deliveryDate: orders.deliveryDate,
-      deliveryStart: orders.deliveryStart,
       deliveryEnd: orders.deliveryEnd,
       status: orders.status,
       price: orders.price,

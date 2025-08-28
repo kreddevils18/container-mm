@@ -56,11 +56,6 @@ export const CreateOrderRequestSchema = z.object({
     .datetime("Ngày hạ hàng không hợp lệ")
     .optional()
     .or(z.literal("")),
-  deliveryStart: z
-    .string()
-    .max(200, "Điểm đầu hạ hàng không được vượt quá 200 ký tự")
-    .optional()
-    .or(z.literal("")),
   deliveryEnd: z
     .string()
     .max(200, "Điểm cuối hạ hàng không được vượt quá 200 ký tự")
@@ -140,11 +135,6 @@ export const UpdateOrderRequestSchema = z.object({
   deliveryDate: z
     .string()
     .datetime("Ngày hạ hàng không hợp lệ")
-    .optional()
-    .or(z.literal("")),
-  deliveryStart: z
-    .string()
-    .max(200, "Điểm đầu hạ hàng không được vượt quá 200 ký tự")
     .optional()
     .or(z.literal("")),
   deliveryEnd: z

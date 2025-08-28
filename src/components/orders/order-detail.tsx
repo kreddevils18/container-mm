@@ -276,7 +276,6 @@ export function OrderDetail({
 
                     {(order.deliveryVehicleId ||
                         order.deliveryDate ||
-                        order.deliveryStart ||
                         order.deliveryEnd) && (
                             <div className="space-y-2">
                                 <p className="text-sm font-semibold">Lịch giao hàng</p>
@@ -320,16 +319,15 @@ export function OrderDetail({
                                     </div>
                                 )}
 
-                                {(order.deliveryStart || order.deliveryEnd) && (
+                                {order.deliveryEnd && (
                                     <div className="flex items-center gap-3">
                                         <MapPin className="h-4 w-4 text-muted-foreground" />
                                         <div>
                                             <p className="font-medium">
-                                                {order.deliveryStart ?? "—"}
-                                                {order.deliveryEnd ? ` → ${order.deliveryEnd}` : ""}
+                                                {order.deliveryEnd}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Lộ trình giao (điểm lấy → điểm giao)
+                                                Điểm giao
                                             </p>
                                         </div>
                                     </div>

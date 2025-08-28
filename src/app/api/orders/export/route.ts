@@ -404,42 +404,44 @@ export async function GET(request: NextRequest): Promise<Response> {
       }
     });
 
-    // Add border around the data table (not including title rows)
+    // Add borders to all cells in the data table (including headers row 3 and 4, but not title rows 1 and 2)
     const dataStartRow = 3; // Start from header row 1
     const dataEndRow = 4 + exportData.length; // End at last data row
     const dataStartCol = 1;
     const dataEndCol = allColumns.length;
 
-    // Apply outer border
+    // Apply border to each individual cell
     for (let row = dataStartRow; row <= dataEndRow; row++) {
       for (let col = dataStartCol; col <= dataEndCol; col++) {
         const cell = worksheet.getCell(row, col);
-
-        // Top border
+        
+        // Apply thin borders to all sides of each cell
+        cell.border = {
+          top: { style: "thin", color: { argb: "000000" } },
+          bottom: { style: "thin", color: { argb: "000000" } },
+          left: { style: "thin", color: { argb: "000000" } },
+          right: { style: "thin", color: { argb: "000000" } },
+        };
+        
+        // Apply thick outer border for the entire table boundary
         if (row === dataStartRow) {
           cell.border = {
             ...cell.border,
             top: { style: "thick", color: { argb: "000000" } },
           };
         }
-
-        // Bottom border
         if (row === dataEndRow) {
           cell.border = {
             ...cell.border,
             bottom: { style: "thick", color: { argb: "000000" } },
           };
         }
-
-        // Left border
         if (col === dataStartCol) {
           cell.border = {
             ...cell.border,
             left: { style: "thick", color: { argb: "000000" } },
           };
         }
-
-        // Right border
         if (col === dataEndCol) {
           cell.border = {
             ...cell.border,

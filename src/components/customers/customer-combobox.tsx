@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
+import { getCustomerById } from "@/services/customers/getCustomerById";
 import { searchCustomers } from "@/services/customers/searchCustomers";
 
 export interface CustomerComboboxProps {
@@ -60,14 +61,12 @@ export const CustomerCombobox = React.forwardRef<
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const abortControllerRef = React.useRef<AbortController | null>(null);
 
-    /** HỦY request đang chạy (ổn định qua ref, không cần deps) */
     const cancelInFlight = React.useCallback(() => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     }, []);
 
-    /** Tải recent khi mở popover */
     const loadRecentCustomers = React.useCallback(async (): Promise<void> => {
       try {
         setIsSearching(true);
@@ -89,7 +88,6 @@ export const CustomerCombobox = React.forwardRef<
       }
     }, [limit, cancelInFlight]);
 
-    /** Tìm kiếm theo query */
     const performSearch = React.useCallback(
       async (query: string): Promise<void> => {
         try {
@@ -114,14 +112,12 @@ export const CustomerCombobox = React.forwardRef<
       [limit, cancelInFlight]
     );
 
-    // Load initial recent customers khi mở lần đầu
     React.useEffect(() => {
       if (open && searchResults.length === 0 && !searchQuery) {
         void loadRecentCustomers();
       }
     }, [open, searchResults.length, searchQuery, loadRecentCustomers]);
 
-    // Perform search khi debounced query đổi
     React.useEffect(() => {
       if (debouncedSearchQuery.trim()) {
         void performSearch(debouncedSearchQuery);
@@ -130,15 +126,42 @@ export const CustomerCombobox = React.forwardRef<
       }
     }, [debouncedSearchQuery, open, performSearch, loadRecentCustomers]);
 
+    const loadCustomerById = React.useCallback(
+      async (customerId: string): Promise<void> => {
+        try {
+          const found = searchResults.find((c) => c.id === customerId);
+          if (found) {
+            setSelectedCustomer(found);
+            return;
+          }
+
+          // Nếu không tìm thấy, gọi API lấy customer theo ID
+          setIsSearching(true);
+          setError(null);
+
+          const customer = await getCustomerById(customerId);
+          if (customer) {
+            setSelectedCustomer(customer);
+          } else {
+            setSelectedCustomer(null);
+          }
+        } catch (_err) {
+          setSelectedCustomer(null);
+        } finally {
+          setIsSearching(false);
+        }
+      },
+      [searchResults]
+    );
+
     // Đồng bộ selected khi value đổi
     React.useEffect(() => {
       if (value && value !== selectedCustomer?.id) {
-        const found = searchResults.find((c) => c.id === value);
-        setSelectedCustomer(found ?? null);
+        void loadCustomerById(value);
       } else if (!value) {
         setSelectedCustomer(null);
       }
-    }, [value, searchResults, selectedCustomer?.id]);
+    }, [value, selectedCustomer?.id, loadCustomerById]);
 
     // Cleanup on unmount
     React.useEffect(() => {

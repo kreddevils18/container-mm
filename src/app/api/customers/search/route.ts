@@ -76,21 +76,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         address: customers.address,
         phone: customers.phone,
         rank: sql<number>`ts_rank(
-          to_tsvector('simple', unaccent(CONCAT_WS(' ', 
+          to_tsvector('simple', CONCAT_WS(' ', 
             COALESCE(${customers.name}, ''),
             COALESCE(${customers.email}, ''), 
             COALESCE(${customers.address}, '')
-          ))),
-          websearch_to_tsquery('simple', unaccent(${escapedQuery}))
+          )),
+          websearch_to_tsquery('simple', ${escapedQuery})
         )`.as("rank"),
       })
       .from(customers)
       .where(
-        sql`${customers.status} = 'active' AND to_tsvector('simple', unaccent(CONCAT_WS(' ', 
+        sql`${customers.status} = 'active' AND to_tsvector('simple', CONCAT_WS(' ', 
           COALESCE(${customers.name}, ''),
           COALESCE(${customers.email}, ''), 
           COALESCE(${customers.address}, '')
-        ))) @@ websearch_to_tsquery('simple', unaccent(${escapedQuery}))`
+        )) @@ websearch_to_tsquery('simple', ${escapedQuery})`
       )
       .orderBy(sql`rank DESC, ${customers.name}`)
       .limit(limit);

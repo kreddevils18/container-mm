@@ -20,7 +20,6 @@ export interface OrderRow {
   emptyPickupStart: string | null;
   emptyPickupEnd: string | null;
   deliveryDate: Date | null;
-  deliveryStart: string | null;
   deliveryEnd: string | null;
   status: "created" | "pending" | "in_progress" | "completed" | "cancelled";
   price: string;

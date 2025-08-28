@@ -56,7 +56,6 @@ export async function getOrdersToExport(params: Record<string, unknown>) {
       emptyPickupStart: orders.emptyPickupStart,
       emptyPickupEnd: orders.emptyPickupEnd,
       deliveryDate: orders.deliveryDate,
-      deliveryStart: orders.deliveryStart,
       deliveryEnd: orders.deliveryEnd,
       status: orders.status,
       price: orders.price,
