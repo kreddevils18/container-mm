@@ -66,16 +66,17 @@ export const CreateOrderRequestSchema = z.object({
     .max(1000, "Mô tả không được vượt quá 1000 ký tự")
     .optional()
     .or(z.literal("")),
-  status: z.enum(["created", "pending", "in_progress", "completed", "cancelled"]).default("created"),
+  status: z.enum(["created", "pending", "in_progress", "completed", "cancelled"]).default("created").optional(),
   price: z
     .string()
     .min(1, "Giá tiền là bắt buộc")
     .regex(/^\d+(\.\d{1,2})?$/, "Giá tiền không hợp lệ")
-    .default("0"),
+    .default("0")
+    .optional(),
   containers: z.array(z.object({
     containerType: z.enum(["D2", "D4", "R2", "R4"]),
-    quantity: z.number().min(0, "Số lượng không được âm").default(0),
-  })).optional().default([]),
+    quantity: z.number().min(0, "Số lượng không được âm"),
+  })).default([]).optional(),
 });
 
 export type CreateOrderRequest = z.infer<typeof CreateOrderRequestSchema>;

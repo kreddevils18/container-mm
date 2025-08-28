@@ -81,7 +81,7 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItemData[] {
   return breadcrumbs;
 }
 
-export function Breadcrumbs(): ReactElement {
+export function Breadcrumbs(): ReactElement | null {
   const pathname = usePathname();
   const breadcrumbs = generateBreadcrumbs(pathname);
 

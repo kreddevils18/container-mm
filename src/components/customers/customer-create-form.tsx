@@ -14,8 +14,8 @@ const DEFAULT_CUSTOMER_CREATE_DATA: CreateCustomerRequest = {
 };
 
 interface CustomerCreateFormProps {
-  action?: (formData: FormData) => void;
-  state?: {
+  action: (formData: FormData) => void;
+  state: {
     success?: boolean;
     error?: string;
     fieldErrors?: Record<string, string[]>;

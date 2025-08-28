@@ -42,8 +42,8 @@ interface Cost {
 
 interface OrderCostActionsProps {
   cost: Cost;
-  onEdit?: (cost: Cost) => void;
-  onCostDeleted?: () => void;
+  onEdit?: ((cost: Cost) => void) | undefined;
+  onCostDeleted?: (() => void) | undefined;
 }
 
 export function OrderCostActions({

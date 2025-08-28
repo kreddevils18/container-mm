@@ -9,12 +9,12 @@ export const CreateCostTypeRequestSchema = z.object({
   description: z
     .string()
     .max(1000, "Mô tả không được vượt quá 1000 ký tự")
-    .optional()
-    .or(z.literal("")),
+    .default("")
+    .optional(),
   category: z.enum(["vehicle", "order"], {
     message: "Danh mục phải là 'vehicle' hoặc 'order'",
   }),
-  status: z.enum(["active", "inactive"]).default("active"),
+  status: z.enum(["active", "inactive"]).default("active").optional(),
 }) satisfies z.ZodType<Omit<NewCostType, 'id' | 'createdAt' | 'updatedAt'>>;
 
 export type CreateCostTypeRequest = z.infer<typeof CreateCostTypeRequestSchema>;

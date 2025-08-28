@@ -30,7 +30,7 @@ export const CreateVehicleRequestSchema = z.object({
             /^[0-9]{9,12}$/,
             "Số chứng minh thư không hợp lệ (chỉ được chứa 9-12 số)"
         ),
-    status: z.enum(["available", "unavailable", "maintenance"]).default("available"),
+    status: z.enum(["available", "unavailable", "maintenance"]).default("available").optional(),
 }) satisfies z.ZodType<Omit<NewVehicle, 'id' | 'createdAt' | 'updatedAt'>>;
 
 export type CreateVehicleRequest = z.infer<typeof CreateVehicleRequestSchema>;

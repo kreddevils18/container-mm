@@ -4,7 +4,8 @@ import type {
   ISheetWriter, 
   WorkbookSpec, 
   ExcelMode,
-  ExcelEvent 
+  ExcelEvent,
+  CellValue 
 } from "../types";
 
 export class FakeDriver implements IExcelDriver {
@@ -52,12 +53,30 @@ export class FakeSheetWriter implements ISheetWriter {
     this.events.push({ type: "writeHeader" });
   }
 
-  async writeRow(values: Array<unknown>, cellStyles?: Array<unknown>): Promise<void> {
-    this.events.push({ type: "writeRow", values: [...values], styles: cellStyles ? [...cellStyles] : undefined });
+  async writeRow(values: CellValue[], cellStyles?: Array<string | Record<string, unknown>>): Promise<void> {
+    const convertedValues = values.map(v => {
+      if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' || v === null || v === undefined) {
+        return String(v);
+      }
+      if (v instanceof Date) {
+        return v.toISOString();
+      }
+      return typeof v === 'object' ? v : String(v);
+    });
+    this.events.push({ type: "writeRow", values: convertedValues, styles: cellStyles ? [...cellStyles] : undefined });
   }
 
-  async writeFooter(values: Array<unknown>, style?: unknown): Promise<void> {
-    this.events.push({ type: "writeFooter", values: [...values], style });
+  async writeFooter(values: CellValue[], style?: string | Record<string, unknown>): Promise<void> {
+    const convertedValues = values.map(v => {
+      if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' || v === null || v === undefined) {
+        return String(v);
+      }
+      if (v instanceof Date) {
+        return v.toISOString();
+      }
+      return typeof v === 'object' ? v : String(v);
+    });
+    this.events.push({ type: "writeFooter", values: convertedValues, style });
   }
 
   async enableAutoFilter(): Promise<void> {
@@ -65,7 +84,7 @@ export class FakeSheetWriter implements ISheetWriter {
   }
 
   async freeze(row?: number, col?: number): Promise<void> {
-    this.events.push({ type: "freeze", row, col });
+    this.events.push({ type: "freeze", row: row ?? undefined, col: col ?? undefined });
   }
 
   async commit(): Promise<void> {

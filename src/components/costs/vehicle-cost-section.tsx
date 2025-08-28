@@ -5,16 +5,10 @@ import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { CostType } from "@/drizzle/schema";
 import { VehicleCostDialog } from "./vehicle-cost-dialog";
 import { VehicleCostEditDialog } from "./vehicle-cost-edit-dialog";
 import { VehicleCostsTable } from "./vehicle-costs-table";
-
-interface CostType {
-  id: string;
-  name: string;
-  category: "vehicle" | "order";
-  status: "active" | "inactive";
-}
 
 interface CostWithDetails {
   id: string;

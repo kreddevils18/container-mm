@@ -66,7 +66,7 @@ export async function exportToExcel<T extends Record<string, any>>(
       throw new Error("Failed to generate Excel buffer");
     }
 
-    const blob = new Blob([buffer], {
+    const blob = new Blob([new Uint8Array(buffer)], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 

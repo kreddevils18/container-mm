@@ -41,7 +41,7 @@ export const DateTimePicker = ({
   const handleDateSelect = (date: Date | undefined): void => {
     if (date) {
       const [hours, minutes] = timeValue.split(":");
-      date.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      date.setHours(parseInt(hours ?? "0", 10), parseInt(minutes ?? "0", 10), 0, 0);
       onChange(date.toISOString());
       setOpen(false);
     }
@@ -52,7 +52,7 @@ export const DateTimePicker = ({
     if (selectedDate) {
       const [hours, minutes] = time.split(":");
       const newDate = new Date(selectedDate);
-      newDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      newDate.setHours(parseInt(hours ?? "0", 10), parseInt(minutes ?? "0", 10), 0, 0);
       onChange(newDate.toISOString());
     }
   };

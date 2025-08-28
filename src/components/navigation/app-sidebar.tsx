@@ -163,7 +163,7 @@ export function AppSidebar(): ReactElement {
                     <span>Cài đặt</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut}>
+                <DropdownMenuItem onClick={() => signOut()}>
                   <Calendar className="mr-2 h-4 w-4" />
                   <span>Đăng xuất</span>
                 </DropdownMenuItem>

@@ -20,6 +20,7 @@ import { useState } from "react";
 import { CostSection } from "@/components/costs/cost-section";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Order } from "@/drizzle/schema";
+import { ORDER_STATUS_LABELS } from "@/schemas/order";
 import { OrderStatusBadge } from "./order-status-badge";
 import { OrderStatusHistory } from "./order-status-history";
 
@@ -32,6 +33,7 @@ interface Cost {
     vehicleId: string | null;
     amount: string;
     costDate: string;
+    paymentDate: string | null;
     description: string | null;
     createdAt: Date;
     updatedAt: Date;
@@ -41,7 +43,7 @@ interface CostType {
     id: string;
     name: string;
     description: string | null;
-    category: string;
+    category: "order" | "vehicle";
     status: "active" | "inactive";
     createdAt: Date;
     updatedAt: Date;
@@ -370,7 +372,11 @@ export function OrderDetail({
             </Card>
 
             {order.statusHistory && order.statusHistory.length > 0 && (
-                <OrderStatusHistory statusHistory={order.statusHistory} />
+                <OrderStatusHistory statusHistory={order.statusHistory.map(item => ({
+                    ...item,
+                    previousStatus: item.previousStatus as keyof typeof ORDER_STATUS_LABELS | null,
+                    newStatus: item.newStatus as keyof typeof ORDER_STATUS_LABELS,
+                }))} />
             )}
 
             <CostSection

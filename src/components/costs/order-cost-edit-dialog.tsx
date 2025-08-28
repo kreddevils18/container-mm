@@ -12,14 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { UpdateCostRequest } from "@/schemas/cost";
+import type { CostType } from "@/drizzle/schema";
 import { CostForm } from "./cost-form";
-
-interface CostType {
-  id: string;
-  name: string;
-  category: "vehicle" | "order";
-  status: "active" | "inactive";
-}
 
 interface Cost {
   id: string;
@@ -50,7 +44,7 @@ export function OrderCostEditDialog({
   onOpenChange,
   costTypes,
   onSuccess,
-}: OrderCostEditDialogProps): ReactElement {
+}: OrderCostEditDialogProps): ReactElement | null {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (data: UpdateCostRequest): Promise<void> => {
@@ -130,7 +124,7 @@ export function OrderCostEditDialog({
             costTypeId: cost.costTypeId,
             amount: cost.amount,
             costDate: cost.costDate,
-            paymentDate: cost.paymentDate,
+            paymentDate: cost.paymentDate ?? null,
             description: cost.description,
           }}
           costTypes={orderCostTypes}

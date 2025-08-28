@@ -30,21 +30,22 @@ const VEHICLE_STATUS_LABELS = {
   maintenance: "Bảo trì",
 } as const;
 
-const _DEFAULT_VEHICLE_FORM_DATA: CreateVehicleRequest = {
-  licensePlate: "",
-  driverName: "",
-  driverPhone: "",
-  driverIdCard: "",
-  status: "available",
-};
+// Commented out unused default data
+// const _DEFAULT_VEHICLE_FORM_DATA: CreateVehicleRequest = {
+//   licensePlate: "",
+//   driverName: "",
+//   driverPhone: "",
+//   driverIdCard: "",
+//   status: "available",
+// };
 
 interface VehicleFormProps {
   /** Initial form data */
   defaultValues: CreateVehicleRequest;
   /** Server action for form submission */
-  action?: (formData: FormData) => void;
+  action: (formData: FormData) => void;
   /** Server state from form action */
-  state?: {
+  state: {
     success?: boolean;
     error?: string;
     fieldErrors?: Record<string, string[]>;
@@ -119,7 +120,7 @@ export const VehicleForm = ({
       )}
 
       <form
-        onSubmit={action ? undefined : form.handleSubmit(handleSubmit)}
+        onSubmit={!action ? form.handleSubmit(handleSubmit) : undefined}
         action={action}
         className="space-y-6"
       >
@@ -135,7 +136,6 @@ export const VehicleForm = ({
                 <FormControl>
                   <Input
                     id={licensePlateId}
-                    name="licensePlate"
                     placeholder="Nhập biển số xe (ví dụ: 30A-12345)"
                     disabled={isLoading}
                     style={{ textTransform: 'uppercase' }}
@@ -167,7 +167,6 @@ export const VehicleForm = ({
                 <FormControl>
                   <Input
                     id={driverNameId}
-                    name="driverName"
                     placeholder="Nhập tên tài xế"
                     disabled={isLoading}
                     {...field}
@@ -194,7 +193,6 @@ export const VehicleForm = ({
                 <FormControl>
                   <Input
                     id={driverPhoneId}
-                    name="driverPhone"
                     placeholder="Nhập số điện thoại (ví dụ: 0901234567)"
                     disabled={isLoading}
                     {...field}
@@ -221,7 +219,6 @@ export const VehicleForm = ({
                 <FormControl>
                   <Input
                     id={driverIdCardId}
-                    name="driverIdCard"
                     placeholder="Nhập số chứng minh thư (9-12 số)"
                     disabled={isLoading}
                     {...field}
@@ -267,7 +264,7 @@ export const VehicleForm = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {action && (
+              {!!action && (
                 <input
                   type="hidden"
                   name="status"

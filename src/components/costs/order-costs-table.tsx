@@ -30,10 +30,10 @@ interface Cost {
 
 interface CostListProps {
   costs: Cost[];
-  isLoading?: boolean;
-  onEdit?: (cost: Cost) => void;
-  onCostDeleted?: () => void;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  onEdit?: ((cost: Cost) => void) | undefined;
+  onCostDeleted?: (() => void) | undefined;
+  showActions?: boolean | undefined;
 }
 
 export function OrderCostsTable({

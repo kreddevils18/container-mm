@@ -26,7 +26,7 @@ export default defineConfig({
         "src/**/*.test.tsx",
         "src/**/*.d.ts"
       ],
-      threshold: {
+      thresholds: {
         global: {
           branches: 70,
           functions: 70,

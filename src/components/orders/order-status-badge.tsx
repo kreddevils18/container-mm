@@ -16,7 +16,7 @@ export function OrderStatusBadge({ status }: OrderStatusBadgeProps): ReactElemen
       case "in_progress":
         return "default";
       case "completed":
-        return "success";
+        return "default";
       case "cancelled":
         return "destructive";
       default:

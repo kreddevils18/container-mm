@@ -21,15 +21,15 @@ export const authConfig: NextAuthConfig = {
           type: "password",
         },
       },
-      async authorize(credentials) {
+      async authorize(credentials: Record<string, unknown> | undefined) {
         try {
           if (!credentials?.username || !credentials?.password) {
             return null;
           }
 
           const validatedFields = LoginRequestSchema.safeParse({
-            username: credentials.username,
-            password: credentials.password,
+            username: credentials.username as string,
+            password: credentials.password as string,
           });
 
           if (!validatedFields.success) {
@@ -43,7 +43,7 @@ export const authConfig: NextAuthConfig = {
           const [user] = await db
             .select()
             .from(users)
-            .where(eq(users.username, credentials.username))
+            .where(eq(users.username, credentials.username as string))
             .limit(1);
 
           if (!user || !user.passwordHash) {
@@ -51,7 +51,7 @@ export const authConfig: NextAuthConfig = {
           }
 
           const isPasswordValid = await compare(
-            credentials.password,
+            credentials.password as string,
             user.passwordHash
           );
 
@@ -103,8 +103,8 @@ export const authConfig: NextAuthConfig = {
           ...session.user,
           id: token.sub as string,
           username: token.username as string,
-          role: token.role as string,
-          status: token.status as string,
+          role: token.role as "admin" | "driver",
+          status: token.status as "active" | "inactive",
           name: token.name as string,
           email: token.email as string,
         };

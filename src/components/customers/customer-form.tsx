@@ -38,8 +38,8 @@ const CUSTOMER_STATUS_LABELS = {
 
 interface CustomerFormProps {
   defaultValues: CreateCustomerRequest;
-  action?: (formData: FormData) => void;
-  state?: {
+  action: (formData: FormData) => void;
+  state: {
     success?: boolean;
     error?: string;
     fieldErrors?: Record<string, string[]>;
@@ -67,12 +67,12 @@ export const CustomerForm = ({
   const phoneId = useId();
   const addressId = useId();
   const statusId = useId();
-  const form = useForm<FormValues>({
+  const form = useForm({
     resolver: zodResolver(CreateCustomerRequestSchema),
     defaultValues: {
       ...defaultValues,
     },
-    mode: "onBlur",
+    mode: "onBlur" as const,
   });
 
   const {
@@ -114,7 +114,7 @@ export const CustomerForm = ({
       )}
 
       <form
-        onSubmit={action ? undefined : form.handleSubmit(handleSubmit)}
+        onSubmit={!action ? form.handleSubmit(handleSubmit) : undefined}
         action={action}
         className="space-y-6"
         noValidate
@@ -161,7 +161,7 @@ export const CustomerForm = ({
                     autoComplete="email"
                     disabled={isLoading}
                     {...field}
-                    value={field.value ?? ""}
+                    value={(field.value as string) ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -188,7 +188,7 @@ export const CustomerForm = ({
                     autoComplete="tel"
                     disabled={isLoading}
                     {...field}
-                    value={field.value ?? ""} // tránh uncontrolled
+                    value={(field.value as string) ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -213,7 +213,7 @@ export const CustomerForm = ({
                     placeholder="Nhập mã số thuế"
                     disabled={isLoading}
                     {...field}
-                    value={field.value ?? ""}
+                    value={(field.value as string) ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -241,7 +241,7 @@ export const CustomerForm = ({
                   placeholder="Nhập địa chỉ chi tiết"
                   disabled={isLoading}
                   {...field}
-                  value={field.value ?? ""}
+                  value={(field.value as string) ?? ""}
                 />
               </FormControl>
               <FormMessage />
@@ -262,7 +262,7 @@ export const CustomerForm = ({
               <FormLabel htmlFor={statusId}>Trạng thái</FormLabel>
               <Select
                 onValueChange={field.onChange}
-                value={field.value ?? "active"}
+                value={(field.value as string) ?? "active"}
                 disabled={isLoading}
                 name="status"
               >
@@ -281,11 +281,11 @@ export const CustomerForm = ({
                 </SelectContent>
               </Select>
 
-              {action && (
+              {!!action && (
                 <Input
                   type="hidden"
                   name="status"
-                  value={field.value ?? "active"}
+                  value={(field.value as string) ?? "active"}
                 />
               )}
 

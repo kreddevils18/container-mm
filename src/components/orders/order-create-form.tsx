@@ -22,9 +22,9 @@ const DEFAULT_ORDER_CREATE_DATA: CreateOrderRequest = {
 
 interface OrderCreateFormProps {
   /** Server action for form submission */
-  action?: (formData: FormData) => void;
+  action: (formData: FormData) => void;
   /** Server state from form action */
-  state?: {
+  state: {
     success?: boolean;
     error?: string;
     fieldErrors?: Record<string, string[]>;

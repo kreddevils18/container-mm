@@ -21,12 +21,12 @@ interface CostTableProps {
   costTypes: CostType[];
   entityId: string;
   entityType: "order" | "vehicle";
-  isLoading?: boolean;
-  error?: string | null;
-  showActions?: boolean;
-  onEdit?: (cost: Cost) => void;
-  onDelete?: () => void;
-  onRetry?: () => void;
+  isLoading?: boolean | undefined;
+  error?: string | null | undefined;
+  showActions?: boolean | undefined;
+  onEdit?: ((cost: Cost) => void) | undefined;
+  onDelete?: (() => void) | undefined;
+  onRetry?: (() => void) | undefined;
 }
 
 export function CostTable({

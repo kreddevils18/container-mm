@@ -44,7 +44,7 @@ interface CostType {
   id: string;
   name: string;
   description: string | null;
-  category: string;
+  category: "order" | "vehicle";
   status: "active" | "inactive";
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +58,7 @@ interface CostFormProps {
     costTypeId: string;
     amount: string;
     costDate: Date;
+    paymentDate: Date | null;
     description: string | null;
   };
   costTypes: CostType[];
@@ -183,9 +184,8 @@ export const CostForm = ({
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  defaultValue={field.value || ""}
                   disabled={isLoading}
-                  name="costTypeId"
                 >
                   <FormControl>
                     <SelectTrigger id={costTypeId} className="w-full">
@@ -224,7 +224,6 @@ export const CostForm = ({
                 <FormControl>
                   <Input
                     id={amountId}
-                    name="amount"
                     type="text"
                     placeholder="150000.50"
                     disabled={isLoading}
@@ -369,7 +368,6 @@ export const CostForm = ({
               <FormControl>
                 <Textarea
                   id={descriptionId}
-                  name="description"
                   placeholder="Nhập mô tả chi tiết về chi phí này"
                   disabled={isLoading}
                   {...field}

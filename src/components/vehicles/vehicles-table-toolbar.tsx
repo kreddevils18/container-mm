@@ -9,7 +9,7 @@ import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filte
 import { DataTableTextFilter, createTextFilterConfig } from "@/components/ui/data-table-text-filter";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { VEHICLE_STATUS_OPTIONS } from "./vehicle-status-badge";
-import type { Vehicle } from "@/types/vehicle";
+import type { Vehicle } from "@/drizzle/schema";
 
 interface VehiclesTableToolbarProps {
   table: Table<Vehicle>;

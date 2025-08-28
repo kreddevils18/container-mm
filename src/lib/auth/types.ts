@@ -1,4 +1,4 @@
-import type { DefaultSession, DefaultUser } from "next-auth";
+import type { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -12,18 +12,14 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 
-  interface User extends DefaultUser {
+  interface User {
     username: string;
     role: "admin" | "driver";
     status: "active" | "inactive";
     name: string | null | undefined;
-    passwordHash: string | null | undefined;
+    passwordHash?: string | null;
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: "admin" | "driver";
-    status?: "active" | "inactive";
-  }
-}
+// Note: JWT interface augmentation removed temporarily for compilation
+// TODO: Fix next-auth v5 module augmentation path

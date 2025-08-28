@@ -21,10 +21,10 @@ const VEHICLE_STATUS_LABELS = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   try {
-    const vehicleId = params.id;
+    const { id: vehicleId } = await params;
 
     if (!vehicleId) {
       return NextResponse.json(

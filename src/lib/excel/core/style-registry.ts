@@ -8,7 +8,7 @@ export class StyleRegistry implements IStyleRegistry {
     this.styles.set(name, { ...style });
   }
 
-  resolve(style?: string | Record<string, unknown>, extra?: Record<string, unknown>): unknown | undefined {
+  resolve(style?: string | Record<string, unknown>, extra?: Record<string, unknown>): Record<string, unknown> | undefined {
     let resolvedStyle: Record<string, unknown> | undefined;
 
     if (typeof style === "string") {
@@ -38,7 +38,7 @@ export class StyleRegistry implements IStyleRegistry {
 
     for (const [key, value] of Object.entries(source)) {
       if (value && typeof value === "object" && !Array.isArray(value) && key !== "richText") {
-        result[key] = this.deepMerge(result[key] || {}, value);
+        result[key] = this.deepMerge((result[key] as Record<string, unknown>) || {}, value as Record<string, unknown>);
       } else {
         result[key] = value;
       }

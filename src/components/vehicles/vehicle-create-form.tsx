@@ -15,9 +15,9 @@ const DEFAULT_VEHICLE_CREATE_DATA: CreateVehicleRequest = {
 
 interface VehicleCreateFormProps {
   /** Server action for form submission */
-  action?: (formData: FormData) => void;
+  action: (formData: FormData) => void;
   /** Server state from form action */
-  state?: {
+  state: {
     success?: boolean;
     error?: string;
     fieldErrors?: Record<string, string[]>;

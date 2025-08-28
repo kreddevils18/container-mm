@@ -33,32 +33,33 @@ import {
   ORDER_STATUS_LABELS,
 } from "@/schemas/order";
 
-const _DEFAULT_ORDER_FORM_DATA: CreateOrderRequest = {
-  customerId: "",
-  containerCode: "",
-  shippingLine: "",
-  bookingNumber: "",
-  oilQuantity: "",
-  emptyPickupVehicleId: "",
-  emptyPickupDate: "",
-  emptyPickupStart: "",
-  emptyPickupEnd: "",
-  deliveryVehicleId: "",
-  deliveryDate: "",
-  deliveryEnd: "",
-  description: "",
-  status: "created",
-  price: "0",
-  containers: [],
-};
+// Commented out unused default data
+// const _DEFAULT_ORDER_FORM_DATA: CreateOrderRequest = {
+//   customerId: "",
+//   containerCode: "",
+//   shippingLine: "",
+//   bookingNumber: "",
+//   oilQuantity: "",
+//   emptyPickupVehicleId: "",
+//   emptyPickupDate: "",
+//   emptyPickupStart: "",
+//   emptyPickupEnd: "",
+//   deliveryVehicleId: "",
+//   deliveryDate: "",
+//   deliveryEnd: "",
+//   description: "",
+//   status: "created",
+//   price: "0",
+//   containers: [],
+// };
 
 interface OrderFormProps {
   /** Initial form data */
   defaultValues: CreateOrderRequest;
   /** Server action for form submission */
-  action?: (formData: FormData) => void;
+  action: (formData: FormData) => void;
   /** Server state from form action */
-  state?: {
+  state: {
     success?: boolean;
     error?: string;
     fieldErrors?: Record<string, string[]>;
@@ -140,7 +141,7 @@ export const OrderForm = ({
       )}
 
       <form
-        onSubmit={action ? undefined : form.handleSubmit(handleSubmit)}
+        onSubmit={!action ? form.handleSubmit(handleSubmit) : undefined}
         action={action}
         className="space-y-6"
       >
@@ -162,7 +163,7 @@ export const OrderForm = ({
                     width="100%"
                   />
                 </FormControl>
-                {action && (
+                {!!action && (
                   <Input
                     type="hidden"
                     name="customerId"
@@ -192,7 +193,6 @@ export const OrderForm = ({
                 <FormControl>
                   <Input
                     id={containerCodeId}
-                    name="containerCode"
                     placeholder="Nhập mã container"
                     disabled={isLoading}
                     {...field}
@@ -218,7 +218,6 @@ export const OrderForm = ({
                 <FormControl>
                   <Input
                     id={shippingLineId}
-                    name="shippingLine"
                     placeholder="Nhập hãng tàu"
                     disabled={isLoading}
                     {...field}
@@ -244,7 +243,6 @@ export const OrderForm = ({
                 <FormControl>
                   <Input
                     id={bookingNumberId}
-                    name="bookingNumber"
                     placeholder="Nhập số booking"
                     disabled={isLoading}
                     {...field}
@@ -273,7 +271,6 @@ export const OrderForm = ({
                 <FormControl>
                   <Input
                     id={oilQuantityId}
-                    name="oilQuantity"
                     type="number"
                     placeholder="0"
                     min="0"
@@ -304,7 +301,6 @@ export const OrderForm = ({
                 <FormControl>
                   <Input
                     id={priceId}
-                    name="price"
                     type="number"
                     placeholder="0"
                     min="0"
@@ -338,7 +334,7 @@ export const OrderForm = ({
                   disabled={isLoading}
                 />
               </FormControl>
-              {action && (
+              {!!action && (
                 <Input
                   type="hidden"
                   name="containers"
@@ -377,7 +373,7 @@ export const OrderForm = ({
                       width="100%"
                     />
                   </FormControl>
-                  {action && (
+                  {!!action && (
                     <Input
                       type="hidden"
                       name="emptyPickupVehicleId"
@@ -408,7 +404,7 @@ export const OrderForm = ({
                       disabled={isLoading}
                     />
                   </FormControl>
-                  {action && (
+                  {!!action && (
                     <Input
                       type="hidden"
                       name="emptyPickupDate"
@@ -438,7 +434,6 @@ export const OrderForm = ({
                   <FormControl>
                     <Input
                       id={emptyPickupStartId}
-                      name="emptyPickupStart"
                       placeholder="Nhập điểm đầu"
                       disabled={isLoading}
                       {...field}
@@ -466,7 +461,6 @@ export const OrderForm = ({
                   <FormControl>
                     <Input
                       id={emptyPickupEndId}
-                      name="emptyPickupEnd"
                       placeholder="Nhập điểm cuối"
                       disabled={isLoading}
                       {...field}
@@ -505,7 +499,7 @@ export const OrderForm = ({
                       width="100%"
                     />
                   </FormControl>
-                  {action && (
+                  {!!action && (
                     <Input
                       type="hidden"
                       name="deliveryVehicleId"
@@ -536,7 +530,7 @@ export const OrderForm = ({
                       disabled={isLoading}
                     />
                   </FormControl>
-                  {action && (
+                  {!!action && (
                     <Input
                       type="hidden"
                       name="deliveryDate"
@@ -563,7 +557,6 @@ export const OrderForm = ({
                 <FormControl>
                   <Input
                     id={deliveryEndId}
-                    name="deliveryEnd"
                     placeholder="Nhập điểm hạ hàng"
                     disabled={isLoading}
                     {...field}
@@ -591,7 +584,6 @@ export const OrderForm = ({
               <FormControl>
                 <Textarea
                   id={descriptionId}
-                  name="description"
                   placeholder="Nhập mô tả chi tiết..."
                   rows={4}
                   disabled={isLoading}
@@ -634,7 +626,7 @@ export const OrderForm = ({
                   ))}
                 </SelectContent>
               </Select>
-              {action && (
+              {!!action && (
                 <Input
                   type="hidden"
                   name="status"

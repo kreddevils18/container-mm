@@ -11,15 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { CreateCostRequest } from "@/schemas/cost";
+import type { CreateCostRequest, UpdateCostRequest } from "@/schemas/cost";
+import type { CostType } from "@/drizzle/schema";
 import { CostForm } from "./cost-form";
-
-interface CostType {
-  id: string;
-  name: string;
-  category: "vehicle" | "order";
-  status: "active" | "inactive";
-}
 
 interface VehicleCostDialogProps {
   vehicleId: string;
@@ -38,7 +32,7 @@ export function VehicleCostDialog({
 }: VehicleCostDialogProps): ReactElement {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (data: CreateCostRequest): Promise<void> => {
+  const handleSubmit = async (data: CreateCostRequest | UpdateCostRequest): Promise<void> => {
     setIsLoading(true);
 
     try {

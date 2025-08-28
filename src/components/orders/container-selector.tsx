@@ -48,8 +48,8 @@ export const ContainerSelector = ({
         updatedContainers.splice(existingIndex, 1);
       }
     } else {
-      if (existingIndex >= 0) {
-        updatedContainers[existingIndex].quantity = newQuantity;
+      if (existingIndex >= 0 && updatedContainers[existingIndex]) {
+        updatedContainers[existingIndex]!.quantity = newQuantity;
       } else {
         updatedContainers.push({ containerType: type, quantity: newQuantity });
       }

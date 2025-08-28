@@ -1,8 +1,11 @@
 import type { 
   ExcelServiceDependencies,
   IExcelService,
+  IWorkbookWriter,
+  ISheetWriter,
   WorkbookSpec,
   SheetData,
+  SheetSpec,
   ExcelMode,
   ColumnDef,
   CellValue,
@@ -21,10 +24,10 @@ export class ExcelService implements IExcelService {
 
     const writer = await this.deps.driver.createWorkbook(workbook, mode);
 
-    for (const { spec, rows } of sheets) {
-      await this.runPluginHooks("beforeSheet", spec);
-      await this.processSheet(writer, spec, rows);
-      await this.runPluginHooks("afterSheet", spec);
+    for (const sheetData of sheets) {
+      await this.runPluginHooks("beforeSheet", sheetData.spec);
+      await this.processSheet(writer, sheetData.spec, sheetData.rows);
+      await this.runPluginHooks("afterSheet", sheetData.spec);
     }
 
     await writer.finalize();
@@ -33,7 +36,7 @@ export class ExcelService implements IExcelService {
     return mode === "memory" && writer.toBuffer ? await writer.toBuffer() : null;
   }
 
-  private async processSheet<TRow>(writer: unknown, spec: SheetData<TRow>, rows: Iterable<TRow> | AsyncIterable<TRow>): Promise<void> {
+  private async processSheet<TRow>(writer: IWorkbookWriter, spec: SheetSpec<TRow>, rows: Iterable<TRow> | AsyncIterable<TRow>): Promise<void> {
     const columns = spec.columns.map((col) => ({
       header: col.header,
       width: col.width,
@@ -69,7 +72,7 @@ export class ExcelService implements IExcelService {
     }
 
     if (spec.footer) {
-      const footerValues = this.createFooterValues(spec.columns, spec.footer.label);
+      const footerValues = this.createFooterValues<TRow>(spec.columns, spec.footer.label);
       const footerStyle = this.resolveStyle(spec.footer.style);
       await sheet.writeFooter?.(footerValues, footerStyle);
     }
@@ -77,7 +80,7 @@ export class ExcelService implements IExcelService {
     await sheet.commit();
   }
 
-  private async processRow<TRow>(sheet: unknown, spec: SheetData<TRow>, row: TRow, rowIndex: number): Promise<void> {
+  private async processRow<TRow>(sheet: ISheetWriter, spec: SheetSpec<TRow>, row: TRow, rowIndex: number): Promise<void> {
     let processedRow = row;
 
     if (spec.beforeWriteRow) {
@@ -87,10 +90,10 @@ export class ExcelService implements IExcelService {
       }
     }
 
-    const values = this.extractRowValues(spec.columns, processedRow);
-    const styles = this.extractRowStyles(spec.columns, processedRow);
+    const values = this.extractRowValues<TRow>(spec.columns, processedRow);
+    const styles = this.extractRowStyles<TRow>(spec.columns, processedRow);
 
-    await sheet.writeRow(values, styles);
+    await sheet.writeRow(values, styles.filter((s) => s !== undefined));
 
     if (spec.afterWriteRow) {
       await spec.afterWriteRow({ rowIndex });
@@ -104,7 +107,7 @@ export class ExcelService implements IExcelService {
       if (col.accessor) {
         value = col.accessor(row);
       } else if (col.path) {
-        value = (row as Record<string, unknown>)[col.path];
+        value = (row as any)[col.path];
       } else {
         value = null;
       }
@@ -113,11 +116,11 @@ export class ExcelService implements IExcelService {
         value = this.deps.formatters.apply(col.formatter, value);
       }
 
-      return value;
+      return value as CellValue;
     });
   }
 
-  private extractRowStyles<TRow>(columns: ColumnDef<TRow>[], _row: TRow): unknown[] {
+  private extractRowStyles<TRow>(columns: ColumnDef<TRow>[], _row: TRow): Array<string | Record<string, unknown> | undefined> {
     return columns.map(col => {
       const style = this.resolveStyle(col.style);
       if (col.numFmt && style) {
@@ -127,21 +130,21 @@ export class ExcelService implements IExcelService {
     });
   }
 
-  private createFooterValues(columns: unknown[], label?: string): unknown[] {
+  private createFooterValues<TRow>(columns: ColumnDef<TRow>[], label?: string): CellValue[] {
     const values = new Array(columns.length).fill("");
     if (label && columns.length > 0) {
       values[0] = label;
     }
-    return values;
+    return values as CellValue[];
   }
 
-  private resolveStyle(style?: string | Record<string, unknown>): unknown {
-    if (!this.deps.styles) return style;
-    return this.deps.styles.resolve(style);
+  private resolveStyle(style?: string | Record<string, unknown>): Record<string, unknown> | undefined {
+    if (!this.deps.styles) return typeof style === 'object' ? style : undefined;
+    return this.deps.styles.resolve(style) as Record<string, unknown> | undefined;
   }
 
   private isAsyncIterable<T>(obj: unknown): obj is AsyncIterable<T> {
-    return obj != null && typeof obj[Symbol.asyncIterator] === "function";
+    return obj != null && typeof (obj as any)[Symbol.asyncIterator] === "function";
   }
 
   private async runPluginHooks(hookName: keyof ExcelPlugin, ...args: unknown[]): Promise<void> {

@@ -129,7 +129,7 @@ export function CostEditDialog({
             costTypeId: cost.costTypeId,
             amount: cost.amount,
             costDate: new Date(cost.costDate),
-            paymentDate: cost.paymentDate ? new Date(cost.paymentDate) : undefined,
+            paymentDate: cost.paymentDate ? new Date(cost.paymentDate) : null,
             description: cost.description,
           }}
           costTypes={filteredCostTypes}

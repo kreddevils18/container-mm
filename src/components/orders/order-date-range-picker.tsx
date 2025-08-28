@@ -92,7 +92,7 @@ export const OrderDateRangePicker = React.forwardRef<DateRangePickerRef>(
           <Calendar
             initialFocus={true}
             mode="range"
-            defaultMonth={date?.from}
+            defaultMonth={date?.from ?? new Date()}
             selected={date}
             onSelect={setDate}
             numberOfMonths={2}

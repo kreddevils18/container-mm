@@ -55,10 +55,10 @@ interface CostActionsProps {
   entityType: "order" | "vehicle";
   
   /** Handler for edit action */
-  onEdit?: (cost: Cost) => void;
+  onEdit?: ((cost: Cost) => void) | undefined;
   
   /** Success callback after cost deletion */
-  onDelete?: () => void;
+  onDelete?: (() => void) | undefined;
 }
 
 export function CostActions({

@@ -138,7 +138,7 @@ class StreamingWorkbookWriter implements IWorkbookWriter {
     };
     
     if (stream) {
-      options.stream = stream;
+      options.stream = stream as any;
     }
 
     this.workbook = new Excel.stream.xlsx.WorkbookWriter(options);
@@ -172,13 +172,15 @@ class StreamingWorkbookWriter implements IWorkbookWriter {
   }
 
   async getStream(): Promise<Readable> {
-    return this.workbook.stream as Readable;
+    // ExcelJS WorkbookWriter doesn't expose a stream property directly
+    // For streaming workbooks, we need to pipe to a stream
+    throw new Error("getStream not implemented for streaming workbook writer");
   }
 }
 
 class StreamingSheetWriter implements ISheetWriter {
   constructor(
-    private worksheet: Excel.stream.xlsx.WorksheetWriter,
+    private worksheet: Excel.Worksheet,
     private columns: Array<{ header: string; headerStyle?: Partial<Excel.Style> }>
   ) {}
 

@@ -65,12 +65,12 @@ export async function getCosts(
   }
 
   if (fromDate) {
-    const fromDateStr = fromDate.toISOString().split("T")[0]; // Convert to YYYY-MM-DD
+    const fromDateStr = fromDate.toISOString().split("T")[0]!; // Convert to YYYY-MM-DD
     whereConditions.push(gte(costs.costDate, fromDateStr));
   }
 
   if (toDate) {
-    const toDateStr = toDate.toISOString().split("T")[0]; // Convert to YYYY-MM-DD
+    const toDateStr = toDate.toISOString().split("T")[0]!; // Convert to YYYY-MM-DD
     whereConditions.push(lte(costs.costDate, toDateStr));
   }
 
@@ -96,7 +96,7 @@ export async function getCosts(
         createdAt: costs.createdAt,
         updatedAt: costs.updatedAt,
         costTypeName: costTypes.name,
-        costTypeCategory: costTypes.category as "vehicle" | "order",
+        costTypeCategory: costTypes.category,
       })
       .from(costs)
       .innerJoin(costTypes, eq(costs.costTypeId, costTypes.id))
@@ -116,7 +116,10 @@ export async function getCosts(
     const total_pages = Math.ceil(total / per_page);
 
     return {
-      costs: costsWithTypes,
+      costs: costsWithTypes as Array<Cost & {
+        costTypeName: string;
+        costTypeCategory: "vehicle" | "order";
+      }>,
       total,
       page,
       per_page,

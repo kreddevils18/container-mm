@@ -42,8 +42,8 @@ interface CostWithDetails {
 
 interface VehicleCostActionsProps {
   cost: CostWithDetails;
-  onEdit?: (cost: CostWithDetails) => void;
-  onCostDeleted?: () => void;
+  onEdit?: ((cost: CostWithDetails) => void) | undefined;
+  onCostDeleted?: (() => void) | undefined;
 }
 
 export function VehicleCostActions({

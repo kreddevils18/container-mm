@@ -72,7 +72,7 @@ export function VehicleDetailExportButton({
       isExporting={isExporting}
       exportText="Xuất phương tiện"
       exportingText="Đang xuất..."
-      className={className}
+      {...(className && { className })}
       size="sm"
       variant="outline"
     />

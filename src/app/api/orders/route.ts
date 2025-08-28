@@ -38,7 +38,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       containers,
     } = validatedFields.data;
 
-    const [newOrder] = await db
+    const insertResult = await db
       .insert(orders)
       .values({
         customerId,
@@ -76,6 +76,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         price: orders.price,
         createdAt: orders.createdAt,
       });
+
+    const newOrder = insertResult[0];
+    if (!newOrder) {
+      throw new Error("Failed to create order");
+    }
 
     // Insert container data if provided (skip if table doesn't exist yet)
     if (containers && containers.length > 0) {

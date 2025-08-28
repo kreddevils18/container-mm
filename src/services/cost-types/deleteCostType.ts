@@ -20,12 +20,13 @@ export async function deleteCostType(id: string) {
     }
 
     // Check if cost type is being used in any costs
-    const [costUsage] = await db
+    const costUsageResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(costs)
       .where(eq(costs.costTypeId, id));
 
-    if (costUsage.count > 0) {
+    const costUsage = costUsageResult[0];
+    if (costUsage && costUsage.count > 0) {
       return {
         success: false,
         message: "Không thể xóa loại chi phí đang được sử dụng",

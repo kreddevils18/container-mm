@@ -25,6 +25,8 @@ interface DataTablePaginationProps {
     totalPages: number;
   };
   selectedCount?: number;
+  table?: any; // TanStack Table instance
+  totalCount?: number;
 }
 
 export function DataTablePagination({

@@ -4,6 +4,7 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronUpIcon,
 } from "lucide-react";
 import * as React from "react";
 import {
@@ -26,7 +27,7 @@ const CalendarRoot = ({ className, rootRef, ...props }: React.ComponentProps<"di
   );
 };
 
-const CalendarChevron = ({ className, orientation, ...props }: React.ComponentProps<"svg"> & { orientation?: "left" | "right" | "down" }) => {
+const CalendarChevron = ({ className, orientation, ...props }: React.ComponentProps<"svg"> & { orientation?: "left" | "right" | "down" | "up" }) => {
   if (orientation === "left") {
     return (
       <ChevronLeftIcon className={cn("size-4", className)} {...props} />
@@ -39,6 +40,12 @@ const CalendarChevron = ({ className, orientation, ...props }: React.ComponentPr
         className={cn("size-4", className)}
         {...props}
       />
+    );
+  }
+  
+  if (orientation === "up") {
+    return (
+      <ChevronUpIcon className={cn("size-4", className)} {...props} />
     );
   }
 

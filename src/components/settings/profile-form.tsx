@@ -53,7 +53,7 @@ export const ProfileForm = ({
       Object.entries(state.fieldErrors).forEach(([field, errors]) => {
         if (errors && errors.length > 0) {
           form.setError(field as keyof UpdateUserProfileRequest, {
-            message: errors[0],
+            message: errors[0] ?? "Validation error",
           });
         }
       });

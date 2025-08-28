@@ -467,7 +467,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodedFilename}`,
-        "Content-Length": buffer.length.toString(),
+        "Content-Length": Buffer.byteLength(buffer).toString(),
         "Cache-Control": "no-cache",
       },
     });
